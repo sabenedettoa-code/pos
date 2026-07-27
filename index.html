@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%231f2937'/><rect x='14' y='38' width='36' height='14' rx='3' fill='%2316a34a'/><path d='M22 12h20v26H22z' fill='%23ffffff'/><path d='M26 18h12M26 24h12M26 30h8' stroke='%23374151' stroke-width='2.5' stroke-linecap='round'/></svg>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Punto de Venta POS Pro (CLP)</title>
+    <!-- Favicon en formato SVG vectorial integrado directamente -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%231f2937'/><rect x='14' y='38' width='36' height='14' rx='3' fill='%2316a34a'/><path d='M22 12h20v26H22z' fill='%23ffffff'/><path d='M26 18h12M26 24h12M26 30h8' stroke='%23374151' stroke-width='2.5' stroke-linecap='round'/></svg>">
     <!-- JsBarcode y XLSX CDN -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -257,6 +258,19 @@
             align-items: center;
         }
 
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+        }
+
         .btn-edit {
             background: var(--warning);
             color: white;
@@ -372,7 +386,7 @@
         .badge-low { background: var(--warning); }
         .badge-out { background: var(--danger); }
 
-        /* Modal / Receipt */
+        /* Modal / Receipt / Checker */
         .modal {
             display: none;
             position: fixed;
@@ -396,6 +410,48 @@
         .receipt-divider { border-top: 1px dashed #000; margin: 8px 0; }
         .btn-close-modal { width: 100%; background: var(--gray-800); color: white; border: none; padding: 10px; margin-top: 10px; cursor: pointer; border-radius: 4px; display: flex; justify-content: center; align-items: center; }
         .btn-print { width: 100%; background: var(--primary); color: white; border: none; padding: 10px; margin-top: 10px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; justify-content: center; align-items: center; }
+
+        /* Consultador de Precios Styles */
+        .price-checker-card {
+            background: white;
+            width: 500px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .price-display-box {
+            background: var(--gray-100);
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 20px;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 2px dashed var(--gray-200);
+        }
+
+        .price-tag {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin: 10px 0;
+        }
+
+        .price-product-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--gray-800);
+        }
+
+        .price-stock-info {
+            font-size: 1rem;
+            color: var(--gray-700);
+            margin-top: 5px;
+        }
 
         @media print {
             body * { visibility: hidden; }
@@ -430,6 +486,7 @@
             <button class="tab-btn" id="tab-btn-inventario" onclick="switchTab('inventario')">📦 Productos <span class="key-badge">F2</span></button>
             <button class="tab-btn" id="tab-btn-ventas" onclick="switchTab('ventas')">📊 Historial <span class="key-badge">F3</span></button>
             <button class="tab-btn" id="tab-btn-config" onclick="switchTab('config')">⚙️ Config. <span class="key-badge">F4</span></button>
+            <button class="tab-btn" style="background-color: var(--warning); color: white;" onclick="openPriceChecker()">🔍 Consultar Precio <span class="key-badge">F11</span></button>
         </div>
         <div class="header-right">
             <div class="user-badge">
@@ -540,7 +597,10 @@
                 <div class="card">
                     <div class="card-header-flex">
                         <span class="card-title">Catálogo de Productos</span>
-                        <input type="text" id="search-inventory" placeholder="🔍 Buscar..." oninput="renderInventory()" style="padding:6px; border-radius:4px; border:1px solid #ccc;">
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button class="btn-warning" onclick="resetAllStock()">🔄 Reiniciar Stock a 0 <span class="key-badge">F10</span></button>
+                            <input type="text" id="search-inventory" placeholder="🔍 Buscar..." oninput="renderInventory()" style="padding:6px; border-radius:4px; border:1px solid #ccc;">
+                        </div>
                     </div>
                     <div class="table-container">
                         <table>
@@ -678,6 +738,24 @@
         </div>
     </div>
 
+    <!-- MODAL CONSULTADOR DE PRECIOS -->
+    <div id="price-checker-modal" class="modal">
+        <div class="price-checker-card">
+            <h2>🔍 Consulta de Precio</h2>
+            <p style="font-size: 0.9rem; color: #6b7280; margin-top: 4px;">Escanea o escribe el código de barras / nombre del producto</p>
+            
+            <div class="scan-box" style="margin-top: 15px; margin-bottom: 0;">
+                <input type="text" id="price-checker-input" placeholder="Escanea código y presiona Enter..." autofocus>
+            </div>
+
+            <div class="price-display-box" id="price-display-box">
+                <span style="color: #9ca3af; font-size: 1.1rem;">Esperando escaneo de producto...</span>
+            </div>
+
+            <button class="btn-close-modal" style="margin-top: 20px;" onclick="closePriceChecker()">Cerrar Consulta <span class="key-badge">Esc</span></button>
+        </div>
+    </div>
+
     <script>
         const formatCLP = (amount) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
 
@@ -699,9 +777,10 @@
 
         // --- MANEJADOR GLOBAL DE TECLAS RÁPIDAS (HOTKEYS) ---
         window.addEventListener('keydown', function(e) {
-            // Si el modal de la boleta está abierto
-            const isModalOpen = document.getElementById('receipt-modal').style.display === 'flex';
-            if (isModalOpen) {
+            const isReceiptOpen = document.getElementById('receipt-modal').style.display === 'flex';
+            const isCheckerOpen = document.getElementById('price-checker-modal').style.display === 'flex';
+
+            if (isReceiptOpen) {
                 if (e.key === 'Escape') {
                     e.preventDefault();
                     closeReceipt();
@@ -712,7 +791,14 @@
                 return;
             }
 
-            // Atajos de Teclas de Función (F1 - F12) y Escape
+            if (isCheckerOpen) {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closePriceChecker();
+                }
+                return;
+            }
+
             switch (e.key) {
                 case 'F1':
                     e.preventDefault();
@@ -751,12 +837,62 @@
                     e.preventDefault();
                     logout();
                     break;
+                case 'F10':
+                    e.preventDefault();
+                    resetAllStock();
+                    break;
+                case 'F11':
+                    e.preventDefault();
+                    openPriceChecker();
+                    break;
                 case 'Escape':
                     e.preventDefault();
                     const barcodeInput = document.getElementById('barcode-input');
                     barcodeInput.focus();
                     barcodeInput.select();
                     break;
+            }
+        });
+
+        // --- CONSULTADOR DE PRECIOS ---
+        function openPriceChecker() {
+            document.getElementById('price-checker-modal').style.display = 'flex';
+            const input = document.getElementById('price-checker-input');
+            input.value = '';
+            input.focus();
+            document.getElementById('price-display-box').innerHTML = '<span style="color: #9ca3af; font-size: 1.1rem;">Esperando escaneo de producto...</span>';
+        }
+
+        function closePriceChecker() {
+            document.getElementById('price-checker-modal').style.display = 'none';
+            document.getElementById('barcode-input').focus();
+        }
+
+        document.getElementById('price-checker-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const term = this.value.trim().toLowerCase();
+                if (term) {
+                    const product = inventory.find(p => p.barcode.toLowerCase() === term || p.name.toLowerCase() === term);
+                    const displayBox = document.getElementById('price-display-box');
+                    
+                    if (product) {
+                        let stockBadge = `<span class="badge badge-ok">Stock: ${product.stock} u.</span>`;
+                        if (product.stock === 0) stockBadge = `<span class="badge badge-out">Agotado (0 u.)</span>`;
+                        else if (product.stock <= (product.minStock || 5)) stockBadge = `<span class="badge badge-low">Bajo Stock (${product.stock} u.)</span>`;
+
+                        displayBox.innerHTML = `
+                            <div class="price-product-name">${product.name}</div>
+                            <div class="price-tag">${formatCLP(product.price)}</div>
+                            <div class="price-stock-info">Código: <code>${product.barcode}</code> | ${stockBadge}</div>
+                        `;
+                    } else {
+                        displayBox.innerHTML = `
+                            <div style="color: var(--danger); font-size: 1.3rem; font-weight: bold;">❌ Producto No Encontrado</div>
+                            <p style="font-size: 0.9rem; color: #6b7280; margin-top: 5px;">Verifica el código e intentalo nuevamente</p>
+                        `;
+                    }
+                    this.value = '';
+                }
             }
         });
 
@@ -921,6 +1057,21 @@
                 inventory = inventory.filter(p => p.barcode !== barcode);
                 localStorage.setItem('pos_inventory', JSON.stringify(inventory));
                 renderInventory();
+            }
+        }
+
+        function resetAllStock() {
+            if (inventory.length === 0) {
+                alert('No hay productos en el inventario para reiniciar.');
+                return;
+            }
+
+            const confirmReset = confirm('⚠️ ¿ESTÁS SEGURO?\n\nEsta acción reiniciará a 0 las existencias de TODOS los productos del catálogo.');
+            if (confirmReset) {
+                inventory.forEach(p => p.stock = 0);
+                localStorage.setItem('pos_inventory', JSON.stringify(inventory));
+                renderInventory();
+                alert('✅ El stock de todos los productos ha sido reestablecido a 0.');
             }
         }
 
