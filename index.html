@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Punto de Venta POS Pro (CLP)</title>
+    <!-- JsBarcode y XLSX CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--gray-800);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Keyboard shortcut badge */
+        .key-badge {
+            background: rgba(0,0,0,0.2);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 0.75rem;
+            margin-left: 6px;
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+        #login-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .login-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 360px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .login-card h2 { margin-bottom: 8px; color: var(--gray-800); }
+        .login-card p { font-size: 0.9rem; color: #6b7280; margin-bottom: 20px; }
+
+        header {
+            background-color: var(--gray-800);
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-badge {
+            background: rgba(255,255,255,0.15);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-logout {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: #9ca3af;
+            padding: 8px 14px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .tab-btn:hover {
+            color: white;
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        .tab-btn.active {
+            color: white;
+            background-color: var(--primary);
+        }
+
+        main {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .tab-content {
+            display: none;
+            height: 100%;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .pos-grid {
+            display: grid;
+            grid-template-columns: 2fr 1.2fr;
+            gap: 20px;
+            height: 100%;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--gray-100);
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--gray-700);
+        }
+
+        .scan-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .scan-box input {
+            flex: 1;
+            padding: 12px;
+            font-size: 1.05rem;
+            border: 2px solid var(--primary);
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .table-container {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--gray-100);
+            color: var(--gray-700);
+            padding: 10px;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 0.95rem;
+        }
+
+        .btn-qty {
+            background: var(--gray-200);
+            border: none;
+            width: 26px;
+            height: 26px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-delete {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-edit {
+            background: var(--warning);
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-right: 5px;
+        }
+
+        .summary-box {
+            background: var(--gray-100);
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .summary-row.total {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-dark);
+            border-top: 1px solid var(--gray-200);
+            padding-top: 10px;
+        }
+
+        .payment-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .pay-method-btn {
+            padding: 10px;
+            border: 2px solid var(--gray-200);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pay-method-btn.selected {
+            border-color: var(--primary);
+            background-color: #eff6ff;
+            color: var(--primary);
+        }
+
+        .payment-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 1.2rem;
+            margin-top: 5px;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .btn-pay {
+            width: 100%;
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-pay:hover { background: #15803d; }
+
+        .btn-secondary {
+            background: var(--gray-700);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .form-group { margin-bottom: 12px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 0.9rem; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--gray-200); border-radius: 6px; font-size: 0.95rem; }
+
+        .inventory-grid { display: grid; grid-template-columns: 1fr 2.5fr; gap: 20px; }
+
+        .badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: white;
+        }
+        .badge-ok { background: var(--success); }
+        .badge-low { background: var(--warning); }
+        .badge-out { background: var(--danger); }
+
+        /* Modal / Receipt */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .receipt {
+            background: white;
+            width: 330px;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .receipt-header { text-align: center; margin-bottom: 12px; }
+        .receipt-divider { border-top: 1px dashed #000; margin: 8px 0; }
+        .btn-close-modal { width: 100%; background: var(--gray-800); color: white; border: none; padding: 10px; margin-top: 10px; cursor: pointer; border-radius: 4px; display: flex; justify-content: center; align-items: center; }
+        .btn-print { width: 100%; background: var(--primary); color: white; border: none; padding: 10px; margin-top: 10px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; justify-content: center; align-items: center; }
+
+        @media print {
+            body * { visibility: hidden; }
+            .receipt, .receipt * { visibility: visible; }
+            .receipt { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PANTALLA DE INICIO DE SESIÓN -->
+    <div id="login-screen">
+        <div class="login-card">
+            <h2>🛒 POS Caja</h2>
+            <p>Selecciona tu usuario para iniciar turno</p>
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Vendedor / Cajero:</label>
+                    <select id="user-select" required></select>
+                </div>
+                <button type="submit" class="btn-pay" style="padding:12px; margin-top:10px;">🔓 Iniciar Sesión <span class="key-badge">Enter</span></button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ENCABEZADO -->
+    <header>
+        <div class="logo">🛒 POS Caja Profesional (CLP)</div>
+        <div class="nav-tabs">
+            <button class="tab-btn active" id="tab-btn-caja" onclick="switchTab('caja')">💻 Caja <span class="key-badge">F1</span></button>
+            <button class="tab-btn" id="tab-btn-inventario" onclick="switchTab('inventario')">📦 Productos <span class="key-badge">F2</span></button>
+            <button class="tab-btn" id="tab-btn-ventas" onclick="switchTab('ventas')">📊 Historial <span class="key-badge">F3</span></button>
+            <button class="tab-btn" id="tab-btn-config" onclick="switchTab('config')">⚙️ Config. <span class="key-badge">F4</span></button>
+        </div>
+        <div class="header-right">
+            <div class="user-badge">
+                👤 <span id="current-user-display">Vendedor</span>
+            </div>
+            <button class="btn-logout" onclick="logout()">Cerrar Sesión <span class="key-badge">F9</span></button>
+        </div>
+    </header>
+
+    <main>
+        <!-- PESTAÑA 1: CAJA / COBRO -->
+        <div id="tab-caja" class="tab-content active">
+            <div class="pos-grid">
+                <div class="card">
+                    <div class="card-header-flex">
+                        <span class="card-title">Venta Actual</span>
+                        <button class="btn-delete" onclick="clearCart()">Limpiar Carro <span class="key-badge">F6</span></button>
+                    </div>
+                    <div class="scan-box">
+                        <input type="text" id="barcode-input" placeholder="Escanea o escribe producto... (Presiona Esc para enfocar aquí)" autofocus>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Producto</th>
+                                    <th>Precio</th>
+                                    <th>Cant.</th>
+                                    <th>Subtotal</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cart-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Cobro</div>
+                    <div class="summary-box">
+                        <div class="summary-row">
+                            <span>Artículos:</span>
+                            <span id="cart-count">0</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>TOTAL:</span>
+                            <span id="cart-total">$0</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <label style="font-size: 0.85rem; font-weight: bold;">Método de Pago:</label>
+                        <div class="payment-methods">
+                            <button type="button" class="pay-method-btn selected" id="method-efectivo" onclick="selectPaymentMethod('Efectivo')">💵 Efectivo <span class="key-badge">F7</span></button>
+                            <button type="button" class="pay-method-btn" id="method-tarjeta" onclick="selectPaymentMethod('Tarjeta/Debito')">💳 Tarjeta <span class="key-badge">F8</span></button>
+                        </div>
+                    </div>
+
+                    <div id="cash-payment-section" style="margin-top: 15px;">
+                        <label style="font-size: 0.85rem; font-weight: bold;">Monto Recibido (CLP):</label>
+                        <input type="number" id="payment-amount" class="payment-input" placeholder="0" oninput="calculateChange()">
+                        
+                        <div class="summary-box" style="margin-top: 10px;">
+                            <div class="summary-row" style="font-size: 1.1rem; font-weight: bold;">
+                                <span>Vuelto / Cambio:</span>
+                                <span id="cart-change" style="color: var(--success);">$0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-pay" onclick="processPayment()">✅ FINALIZAR Y EMITIR TICKET <span class="key-badge">F5 / F12</span></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PESTAÑA 2: INVENTARIO -->
+        <div id="tab-inventario" class="tab-content">
+            <div class="inventory-grid">
+                <div class="card">
+                    <div class="card-title" id="form-title">Registrar Producto</div>
+                    <form id="product-form" onsubmit="saveProduct(event)">
+                        <div class="form-group">
+                            <label>Código de Barras (SKU)</label>
+                            <input type="text" id="prod-barcode" required placeholder="Ej: 780123456789">
+                        </div>
+                        <div class="form-group">
+                            <label>Nombre del Producto</label>
+                            <input type="text" id="prod-name" required placeholder="Ej: Bebida 1.5L">
+                        </div>
+                        <div class="form-group">
+                            <label>Precio de Venta (CLP)</label>
+                            <input type="number" id="prod-price" required min="0" placeholder="Ej: 1500">
+                        </div>
+                        <div class="form-group">
+                            <label>Stock Disponible</label>
+                            <input type="number" id="prod-stock" required min="0" placeholder="Ej: 50">
+                        </div>
+                        <div class="form-group">
+                            <label>Alerta Stock Mínimo</label>
+                            <input type="number" id="prod-min-stock" required min="1" value="5">
+                        </div>
+                        <button type="submit" class="btn-pay" style="padding:10px; margin-top:5px;">💾 Guardar Producto</button>
+                        <button type="button" class="btn-secondary" id="btn-cancel-edit" style="width:100%; margin-top:5px; display:none;" onclick="cancelEdit()">Cancelar Edición</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header-flex">
+                        <span class="card-title">Catálogo de Productos</span>
+                        <input type="text" id="search-inventory" placeholder="🔍 Buscar..." oninput="renderInventory()" style="padding:6px; border-radius:4px; border:1px solid #ccc;">
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Producto</th>
+                                    <th>Precio</th>
+                                    <th>Stock</th>
+                                    <th>Estado</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PESTAÑA 3: HISTORIAL DE VENTAS -->
+        <div id="tab-ventas" class="tab-content">
+            <div class="card">
+                <div class="card-header-flex">
+                    <span class="card-title">Historial de Transacciones</span>
+                    <div>
+                        <button class="btn-secondary" onclick="exportSalesToExcel()">📥 Exportar a Excel</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>N° Ticket</th>
+                                <th>Fecha y Hora</th>
+                                <th>Vendedor</th>
+                                <th>Método</th>
+                                <th>Total (CLP)</th>
+                                <th>Pagó con</th>
+                                <th>Vuelto</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sales-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- PESTAÑA 4: CONFIGURACIÓN -->
+        <div id="tab-config" class="tab-content">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="card">
+                    <div class="card-title">Configuración del Negocio</div>
+                    <form id="config-form" onsubmit="saveConfig(event)">
+                        <div class="form-group">
+                            <label>Nombre del Negocio / Tienda</label>
+                            <input type="text" id="cfg-name" required placeholder="Ej: Mi Almacén">
+                        </div>
+                        <div class="form-group">
+                            <label>RUT / Identificación Fiscal</label>
+                            <input type="text" id="cfg-rut" placeholder="Ej: 76.543.210-K">
+                        </div>
+                        <div class="form-group">
+                            <label>Dirección / Ciudad</label>
+                            <input type="text" id="cfg-address" placeholder="Ej: Av. Principal 123">
+                        </div>
+                        <button type="submit" class="btn-pay" style="padding:10px;">💾 Guardar Datos</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Gestión de Vendedores / Usuarios</div>
+                    <form id="user-form" onsubmit="addUser(event)">
+                        <div class="form-group">
+                            <label>Nombre del Nuevo Vendedor</label>
+                            <input type="text" id="new-user-name" required placeholder="Ej: Juan Pérez">
+                        </div>
+                        <button type="submit" class="btn-secondary" style="width:100%; padding:10px;">➕ Agregar Vendedor</button>
+                    </form>
+                    <div style="margin-top: 15px;" class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nombre Vendedor</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL BOLETA -->
+    <div id="receipt-modal" class="modal">
+        <div class="receipt">
+            <div class="receipt-header">
+                <h3 id="rcp-store-name">MI TIENDA</h3>
+                <p style="font-size: 0.75rem;" id="rcp-store-rut"></p>
+                <p style="font-size: 0.75rem;" id="rcp-store-address"></p>
+                <div class="receipt-divider"></div>
+                <p style="font-size: 0.8rem;" id="rcp-date"></p>
+                <p style="font-size: 0.8rem; font-weight: bold;" id="rcp-id"></p>
+                <p style="font-size: 0.85rem; font-weight: bold; margin-top: 4px; color: var(--primary-dark);" id="rcp-seller"></p>
+            </div>
+            <div class="receipt-divider"></div>
+            <div id="rcp-items"></div>
+            <div class="receipt-divider"></div>
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1rem;">
+                <span>TOTAL:</span>
+                <span id="rcp-total"></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 4px;">
+                <span>Método Pago:</span>
+                <span id="rcp-method"></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                <span>Pagó con:</span>
+                <span id="rcp-paid"></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                <span>Vuelto:</span>
+                <span id="rcp-change"></span>
+            </div>
+            <div class="receipt-divider"></div>
+            <div style="text-align: center; margin-top: 8px;">
+                <svg id="barcode-receipt"></svg>
+                <p style="font-size: 0.75rem;">¡Gracias por su preferencia!</p>
+            </div>
+            <button class="btn-print no-print" onclick="window.print()">🖨️ Imprimir Ticket <span class="key-badge">Enter</span></button>
+            <button class="btn-close-modal no-print" onclick="closeReceipt()">Cerrar / Nueva Venta <span class="key-badge">Esc</span></button>
+        </div>
+    </div>
+
+    <script>
+        const formatCLP = (amount) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
+
+        // Estado Global
+        let inventory = JSON.parse(localStorage.getItem('pos_inventory')) || [
+            { barcode: '780123456789', name: 'Coca Cola 1.5L', price: 1800, stock: 25, minStock: 5 },
+            { barcode: '780987654321', name: 'Pan Hallulla 1Kg', price: 1600, stock: 4, minStock: 10 },
+            { barcode: '101', name: 'Café Espresso', price: 2000, stock: 0, minStock: 5 }
+        ];
+
+        let users = JSON.parse(localStorage.getItem('pos_users')) || ['Cajero Principal', 'María González', 'Carlos Rojas'];
+        let currentUser = localStorage.getItem('pos_current_user') || null;
+
+        let cart = [];
+        let salesHistory = JSON.parse(localStorage.getItem('pos_sales')) || [];
+        let storeConfig = JSON.parse(localStorage.getItem('pos_config')) || { name: 'MI ALMACÉN / TIENDA', rut: '76.543.210-K', address: 'Santiago, Chile' };
+        let currentPayMethod = 'Efectivo';
+        let editingBarcode = null;
+
+        // --- MANEJADOR GLOBAL DE TECLAS RÁPIDAS (HOTKEYS) ---
+        window.addEventListener('keydown', function(e) {
+            // Si el modal de la boleta está abierto
+            const isModalOpen = document.getElementById('receipt-modal').style.display === 'flex';
+            if (isModalOpen) {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeReceipt();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    window.print();
+                }
+                return;
+            }
+
+            // Atajos de Teclas de Función (F1 - F12) y Escape
+            switch (e.key) {
+                case 'F1':
+                    e.preventDefault();
+                    switchTab('caja');
+                    break;
+                case 'F2':
+                    e.preventDefault();
+                    switchTab('inventario');
+                    break;
+                case 'F3':
+                    e.preventDefault();
+                    switchTab('ventas');
+                    break;
+                case 'F4':
+                    e.preventDefault();
+                    switchTab('config');
+                    break;
+                case 'F5':
+                case 'F12':
+                    e.preventDefault();
+                    processPayment();
+                    break;
+                case 'F6':
+                    e.preventDefault();
+                    clearCart();
+                    break;
+                case 'F7':
+                    e.preventDefault();
+                    selectPaymentMethod('Efectivo');
+                    break;
+                case 'F8':
+                    e.preventDefault();
+                    selectPaymentMethod('Tarjeta/Debito');
+                    break;
+                case 'F9':
+                    e.preventDefault();
+                    logout();
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    const barcodeInput = document.getElementById('barcode-input');
+                    barcodeInput.focus();
+                    barcodeInput.select();
+                    break;
+            }
+        });
+
+        // --- SISTEMA DE AUTENTICACIÓN Y USUARIOS ---
+        function checkLoginState() {
+            if (!currentUser) {
+                document.getElementById('login-screen').style.display = 'flex';
+                renderUserSelect();
+            } else {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('current-user-display').innerText = currentUser;
+                document.getElementById('barcode-input').focus();
+            }
+        }
+
+        function renderUserSelect() {
+            const select = document.getElementById('user-select');
+            select.innerHTML = users.map(u => `<option value="${u}">${u}</option>`).join('');
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const selected = document.getElementById('user-select').value;
+            if (selected) {
+                currentUser = selected;
+                localStorage.setItem('pos_current_user', currentUser);
+                checkLoginState();
+            }
+        }
+
+        function logout() {
+            if (confirm('¿Cerrar sesión actual?')) {
+                currentUser = null;
+                localStorage.removeItem('pos_current_user');
+                checkLoginState();
+            }
+        }
+
+        function addUser(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('new-user-name');
+            const name = nameInput.value.trim();
+            if (name && !users.includes(name)) {
+                users.push(name);
+                localStorage.setItem('pos_users', JSON.stringify(users));
+                renderUsersTable();
+                renderUserSelect();
+                nameInput.value = '';
+            } else {
+                alert('El usuario ya existe o es inválido');
+            }
+        }
+
+        function deleteUser(name) {
+            if (users.length <= 1) {
+                alert('Debe existir al menos un vendedor en el sistema.');
+                return;
+            }
+            if (confirm(`¿Eliminar al vendedor "${name}"?`)) {
+                users = users.filter(u => u !== name);
+                localStorage.setItem('pos_users', JSON.stringify(users));
+                renderUsersTable();
+                renderUserSelect();
+            }
+        }
+
+        function renderUsersTable() {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td><strong>${u}</strong></td>
+                    <td><button class="btn-delete" onclick="deleteUser('${u}')">Eliminar</button></td>
+                </tr>
+            `).join('');
+        }
+
+        // Navigation
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            const btn = document.getElementById(`tab-btn-${tabName}`);
+            if(btn) btn.classList.add('active');
+            
+            const tab = document.getElementById(`tab-${tabName}`);
+            if(tab) tab.classList.add('active');
+
+            if (tabName === 'caja') document.getElementById('barcode-input').focus();
+        }
+
+        // Metodo de Pago
+        function selectPaymentMethod(method) {
+            currentPayMethod = method;
+            document.querySelectorAll('.pay-method-btn').forEach(b => b.classList.remove('selected'));
+            if(method === 'Efectivo') {
+                document.getElementById('method-efectivo').classList.add('selected');
+                document.getElementById('cash-payment-section').style.display = 'block';
+                document.getElementById('payment-amount').focus();
+            } else {
+                document.getElementById('method-tarjeta').classList.add('selected');
+                document.getElementById('cash-payment-section').style.display = 'none';
+            }
+        }
+
+        // Inventario
+        function saveProduct(e) {
+            e.preventDefault();
+            const barcode = document.getElementById('prod-barcode').value.trim();
+            const name = document.getElementById('prod-name').value.trim();
+            const price = parseInt(document.getElementById('prod-price').value);
+            const stock = parseInt(document.getElementById('prod-stock').value);
+            const minStock = parseInt(document.getElementById('prod-min-stock').value) || 5;
+
+            const existingIndex = inventory.findIndex(p => p.barcode === barcode);
+            
+            if (editingBarcode && editingBarcode !== barcode) {
+                inventory = inventory.filter(p => p.barcode !== editingBarcode);
+            }
+
+            if (existingIndex > -1 && !editingBarcode) {
+                alert('¡El código ya existe!');
+                return;
+            }
+
+            if (editingBarcode) {
+                const idx = inventory.findIndex(p => p.barcode === editingBarcode);
+                if(idx > -1) inventory[idx] = { barcode, name, price, stock, minStock };
+            } else {
+                inventory.push({ barcode, name, price, stock, minStock });
+            }
+
+            localStorage.setItem('pos_inventory', JSON.stringify(inventory));
+            renderInventory();
+            cancelEdit();
+            alert('Producto guardado con éxito');
+        }
+
+        function editProduct(barcode) {
+            const prod = inventory.find(p => p.barcode === barcode);
+            if (!prod) return;
+
+            editingBarcode = barcode;
+            document.getElementById('form-title').innerText = 'Editar Producto';
+            document.getElementById('prod-barcode').value = prod.barcode;
+            document.getElementById('prod-name').value = prod.name;
+            document.getElementById('prod-price').value = prod.price;
+            document.getElementById('prod-stock').value = prod.stock;
+            document.getElementById('prod-min-stock').value = prod.minStock || 5;
+
+            document.getElementById('btn-cancel-edit').style.display = 'block';
+        }
+
+        function cancelEdit() {
+            editingBarcode = null;
+            document.getElementById('form-title').innerText = 'Registrar Producto';
+            document.getElementById('product-form').reset();
+            document.getElementById('btn-cancel-edit').style.display = 'none';
+        }
+
+        function deleteProduct(barcode) {
+            if (confirm('¿Eliminar este producto?')) {
+                inventory = inventory.filter(p => p.barcode !== barcode);
+                localStorage.setItem('pos_inventory', JSON.stringify(inventory));
+                renderInventory();
+            }
+        }
+
+        function renderInventory() {
+            const query = document.getElementById('search-inventory').value.toLowerCase();
+            const tbody = document.getElementById('inventory-table-body');
+            
+            const filtered = inventory.filter(p => p.name.toLowerCase().includes(query) || p.barcode.toLowerCase().includes(query));
+
+            tbody.innerHTML = filtered.map(p => {
+                let badge = '<span class="badge badge-ok">OK</span>';
+                if (p.stock === 0) badge = '<span class="badge badge-out">Agotado</span>';
+                else if (p.stock <= (p.minStock || 5)) badge = '<span class="badge badge-low">Bajo Stock</span>';
+
+                return `
+                    <tr>
+                        <td><code>${p.barcode}</code></td>
+                        <td>${p.name}</td>
+                        <td>${formatCLP(p.price)}</td>
+                        <td>${p.stock} u.</td>
+                        <td>${badge}</td>
+                        <td>
+                            <button class="btn-edit" onclick="editProduct('${p.barcode}')">✏️</button>
+                            <button class="btn-delete" onclick="deleteProduct('${p.barcode}')">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Sistema Caja
+        document.getElementById('barcode-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const term = this.value.trim().toLowerCase();
+                if (term) {
+                    const product = inventory.find(p => p.barcode.toLowerCase() === term || p.name.toLowerCase() === term);
+                    if (product) {
+                        addToCart(product.barcode);
+                        this.value = '';
+                    } else {
+                        alert('Producto no encontrado');
+                    }
+                }
+            }
+        });
+
+        function addToCart(barcode) {
+            const product = inventory.find(p => p.barcode === barcode);
+            if (!product) return;
+
+            if (product.stock <= 0) {
+                alert('¡Sin stock disponible!');
+                return;
+            }
+
+            const cartItem = cart.find(item => item.barcode === barcode);
+            if (cartItem) {
+                if (cartItem.qty + 1 > product.stock) {
+                    alert('Supera el stock disponible');
+                    return;
+                }
+                cartItem.qty += 1;
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+
+            renderCart();
+        }
+
+        function updateQty(barcode, delta) {
+            const item = cart.find(i => i.barcode === barcode);
+            const product = inventory.find(p => p.barcode === barcode);
+
+            if (item) {
+                if (delta > 0 && item.qty + delta > product.stock) {
+                    alert('Supera el stock disponible');
+                    return;
+                }
+                item.qty += delta;
+                if (item.qty <= 0) cart = cart.filter(i => i.barcode !== barcode);
+            }
+            renderCart();
+        }
+
+        function removeFromCart(barcode) {
+            cart = cart.filter(i => i.barcode !== barcode);
+            renderCart();
+        }
+
+        function clearCart() {
+            cart = [];
+            renderCart();
+        }
+
+        function renderCart() {
+            const tbody = document.getElementById('cart-table-body');
+            tbody.innerHTML = cart.map(item => `
+                <tr>
+                    <td><code>${item.barcode}</code></td>
+                    <td>${item.name}</td>
+                    <td>${formatCLP(item.price)}</td>
+                    <td>
+                        <button class="btn-qty" onclick="updateQty('${item.barcode}', -1)">-</button>
+                        <span style="margin: 0 5px; font-weight:bold;">${item.qty}</span>
+                        <button class="btn-qty" onclick="updateQty('${item.barcode}', 1)">+</button>
+                    </td>
+                    <td>${formatCLP(item.price * item.qty)}</td>
+                    <td><button class="btn-delete" onclick="removeFromCart('${item.barcode}')">X</button></td>
+                </tr>
+            `).join('');
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const count = cart.reduce((sum, item) => sum + item.qty, 0);
+
+            document.getElementById('cart-total').innerText = formatCLP(total);
+            document.getElementById('cart-count').innerText = count;
+
+            calculateChange();
+        }
+
+        function calculateChange() {
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const payment = parseInt(document.getElementById('payment-amount').value) || 0;
+            const change = payment - total;
+
+            const changeEl = document.getElementById('cart-change');
+            if (currentPayMethod === 'Efectivo') {
+                if (change >= 0) {
+                    changeEl.innerText = formatCLP(change);
+                    changeEl.style.color = 'var(--success)';
+                } else {
+                    changeEl.innerText = 'Falta dinero';
+                    changeEl.style.color = 'var(--danger)';
+                }
+            }
+        }
+
+        function processPayment() {
+            if (cart.length === 0) {
+                alert('El carrito está vacío.');
+                return;
+            }
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            let payment = total;
+
+            if (currentPayMethod === 'Efectivo') {
+                payment = parseInt(document.getElementById('payment-amount').value) || 0;
+                if (payment < total) {
+                    alert('El dinero ingresado es menor al total.');
+                    return;
+                }
+            }
+
+            // Descontar Stock
+            cart.forEach(cartItem => {
+                const prod = inventory.find(p => p.barcode === cartItem.barcode);
+                if (prod) prod.stock -= cartItem.qty;
+            });
+
+            localStorage.setItem('pos_inventory', JSON.stringify(inventory));
+
+            // Registro Transacción
+            const ticketId = 'T-' + String(salesHistory.length + 1).padStart(5, '0');
+            const saleData = {
+                id: ticketId,
+                date: new Date().toLocaleString('es-CL'),
+                seller: currentUser || 'Vendedor General',
+                method: currentPayMethod,
+                items: [...cart],
+                total: total,
+                paid: payment,
+                change: payment - total
+            };
+
+            salesHistory.push(saleData);
+            localStorage.setItem('pos_sales', JSON.stringify(salesHistory));
+
+            showReceipt(saleData);
+            renderInventory();
+            renderSales();
+        }
+
+        function showReceipt(sale) {
+            document.getElementById('rcp-store-name').innerText = storeConfig.name;
+            document.getElementById('rcp-store-rut').innerText = storeConfig.rut ? `RUT: ${storeConfig.rut}` : '';
+            document.getElementById('rcp-store-address').innerText = storeConfig.address || '';
+            document.getElementById('rcp-id').innerText = `TICKET: ${sale.id}`;
+            document.getElementById('rcp-date').innerText = sale.date;
+            document.getElementById('rcp-seller').innerText = `Vendedor: ${sale.seller}`;
+            
+            const itemsContainer = document.getElementById('rcp-items');
+            itemsContainer.innerHTML = sale.items.map(i => `
+                <div style="display:flex; justify-content:space-between; font-size:0.85rem;">
+                    <span>${i.qty}x ${i.name}</span>
+                    <span>${formatCLP(i.price * i.qty)}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('rcp-total').innerText = formatCLP(sale.total);
+            document.getElementById('rcp-method').innerText = sale.method;
+            document.getElementById('rcp-paid').innerText = formatCLP(sale.paid);
+            document.getElementById('rcp-change').innerText = formatCLP(sale.change);
+
+            JsBarcode("#barcode-receipt", sale.id, { format: "CODE128", width: 1.5, height: 35, displayValue: false });
+
+            document.getElementById('receipt-modal').style.display = 'flex';
+        }
+
+        function closeReceipt() {
+            document.getElementById('receipt-modal').style.display = 'none';
+            clearCart();
+            document.getElementById('payment-amount').value = '';
+            document.getElementById('barcode-input').focus();
+        }
+
+        function renderSales() {
+            const tbody = document.getElementById('sales-table-body');
+            tbody.innerHTML = salesHistory.slice().reverse().map(s => `
+                <tr>
+                    <td><code>${s.id}</code></td>
+                    <td>${s.date}</td>
+                    <td><strong>${s.seller || 'General'}</strong></td>
+                    <td>${s.method}</td>
+                    <td><strong>${formatCLP(s.total)}</strong></td>
+                    <td>${formatCLP(s.paid)}</td>
+                    <td>${formatCLP(s.change)}</td>
+                    <td><button class="btn-secondary" style="padding: 2px 8px;" onclick='reprintReceipt(${JSON.stringify(s)})'>🖨️ Ticket</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function reprintReceipt(saleData) {
+            showReceipt(saleData);
+        }
+
+        // Exportar a Excel
+        function exportSalesToExcel() {
+            if(salesHistory.length === 0) {
+                alert('No hay ventas registradas para exportar.');
+                return;
+            }
+
+            const dataToExport = salesHistory.map(s => ({
+                'N° Ticket': s.id,
+                'Fecha y Hora': s.date,
+                'Vendedor': s.seller || 'General',
+                'Método de Pago': s.method,
+                'Total CLP': s.total,
+                'Monto Pagado': s.paid,
+                'Vuelto': s.change,
+                'Cantidad de Items': s.items.reduce((sum, i) => sum + i.qty, 0)
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Historial_Ventas");
+            XLSX.writeFile(wb, `Reporte_Ventas_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        // Configuración
+        function saveConfig(e) {
+            e.preventDefault();
+            storeConfig = {
+                name: document.getElementById('cfg-name').value.trim(),
+                rut: document.getElementById('cfg-rut').value.trim(),
+                address: document.getElementById('cfg-address').value.trim()
+            };
+            localStorage.setItem('pos_config', JSON.stringify(storeConfig));
+            alert('Configuración guardada con éxito');
+        }
+
+        function loadConfigForm() {
+            document.getElementById('cfg-name').value = storeConfig.name || '';
+            document.getElementById('cfg-rut').value = storeConfig.rut || '';
+            document.getElementById('cfg-address').value = storeConfig.address || '';
+        }
+
+        // Inicializar
+        checkLoginState();
+        renderInventory();
+        renderSales();
+        renderUsersTable();
+        loadConfigForm();
+    </script>
+</body>
+</html>
