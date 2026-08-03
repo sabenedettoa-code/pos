@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Punto de Venta POS Pro (CLP)</title>
+    <!-- Favicon en formato SVG vectorial -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%231f2937'/><rect x='14' y='38' width='36' height='14' rx='3' fill='%2316a34a'/><path d='M22 12h20v26H22z' fill='%23ffffff'/><path d='M26 18h12M26 24h12M26 30h8' stroke='%23374151' stroke-width='2.5' stroke-linecap='round'/></svg>">
+    <!-- JsBarcode y XLSX CDN -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -188,10 +190,15 @@
             color: var(--gray-700);
         }
 
+        /* Buscador en Vivo en Caja */
+        .scan-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
         .scan-box {
             display: flex;
             gap: 10px;
-            margin-bottom: 15px;
         }
 
         .scan-box input {
@@ -201,6 +208,34 @@
             border: 2px solid var(--primary);
             border-radius: 6px;
             outline: none;
+        }
+
+        .search-results-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0; right: 0;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+
+        .search-result-item {
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border-bottom: 1px solid var(--gray-100);
+            transition: background 0.15s;
+        }
+
+        .search-result-item:hover, .search-result-item.selected {
+            background-color: #eff6ff;
         }
 
         .table-container {
@@ -477,7 +512,7 @@
 </head>
 <body>
 
-    <!-- PANTALLA DE INICIO DE SESIÓN CON CONTRASEÑA -->
+    <!-- PANTALLA DE INICIO DE SESIÓN -->
     <div id="login-screen">
         <div class="login-card">
             <h2>🛒 POS Caja</h2>
@@ -523,8 +558,11 @@
                         <span class="card-title">Venta Actual</span>
                         <button class="btn-delete" onclick="clearCart()">Limpiar Carro <span class="key-badge">F6</span></button>
                     </div>
-                    <div class="scan-box">
-                        <input type="text" id="barcode-input" placeholder="Escanea o escribe producto... (Presiona Esc para enfocar aquí)" autofocus>
+                    <div class="scan-container">
+                        <div class="scan-box">
+                            <input type="text" id="barcode-input" placeholder="🔍 Escribe nombre o escanea código... (Presiona Esc para enfocar)" autofocus oninput="handleSearchInput(this.value)" autocomplete="off">
+                        </div>
+                        <div id="search-dropdown" class="search-results-dropdown"></div>
                     </div>
                     <div class="table-container">
                         <table>
@@ -617,7 +655,7 @@
                         <span class="card-title">Catálogo de Productos</span>
                         <div style="display: flex; gap: 10px; align-items: center;">
                             <button class="btn-warning" onclick="resetAllStock()">🔄 Reiniciar Stock a 0 <span class="key-badge">F10</span></button>
-                            <input type="text" id="search-inventory" placeholder="🔍 Buscar..." oninput="renderInventory()" style="padding:6px; border-radius:4px; border:1px solid #ccc;">
+                            <input type="text" id="search-inventory" placeholder="🔍 Buscar por nombre o código..." oninput="renderInventory()" style="padding:6px; border-radius:4px; border:1px solid #ccc; width: 220px;">
                         </div>
                     </div>
                     <div class="table-container">
@@ -767,7 +805,7 @@
             <p style="font-size: 0.9rem; color: #6b7280; margin-top: 4px;">Escanea o escribe el código de barras / nombre del producto</p>
             
             <div class="scan-box" style="margin-top: 15px; margin-bottom: 0;">
-                <input type="text" id="price-checker-input" placeholder="Escanea código y presiona Enter..." autofocus>
+                <input type="text" id="price-checker-input" placeholder="Escanea o busca nombre..." autofocus>
             </div>
 
             <div class="price-display-box" id="price-display-box">
@@ -788,7 +826,6 @@
             { barcode: '101', name: 'Café Espresso', price: 2000, stock: 0, minStock: 5 }
         ];
 
-        // Estructura de usuarios con clave protegida
         let users = JSON.parse(localStorage.getItem('pos_users_v2')) || [
             { name: 'Cajero Principal', pass: '1234' },
             { name: 'María González', pass: '1234' },
@@ -875,10 +912,58 @@
                     break;
                 case 'Escape':
                     e.preventDefault();
+                    hideSearchDropdown();
                     const barcodeInput = document.getElementById('barcode-input');
                     barcodeInput.focus();
                     barcodeInput.select();
                     break;
+            }
+        });
+
+        // BÚSQUEDA EN TIEMPO REAL / BUSCADOR POR NOMBRE EN CAJA
+        function handleSearchInput(val) {
+            const dropdown = document.getElementById('search-dropdown');
+            const term = val.trim().toLowerCase();
+
+            if (!term) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            const matches = inventory.filter(p => 
+                p.name.toLowerCase().includes(term) || p.barcode.toLowerCase().includes(term)
+            );
+
+            if (matches.length > 0) {
+                dropdown.innerHTML = matches.slice(0, 6).map(p => `
+                    <div class="search-result-item" onclick="selectSearchMatch('${p.barcode}')">
+                        <div>
+                            <strong>${p.name}</strong>
+                            <div style="font-size:0.75rem; color:#6b7280;">Código: ${p.barcode} | Stock: ${p.stock} u.</div>
+                        </div>
+                        <div style="font-weight:bold; color:var(--primary-dark);">${formatCLP(p.price)}</div>
+                    </div>
+                `).join('');
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function selectSearchMatch(barcode) {
+            addToCart(barcode);
+            document.getElementById('barcode-input').value = '';
+            hideSearchDropdown();
+            document.getElementById('barcode-input').focus();
+        }
+
+        function hideSearchDropdown() {
+            document.getElementById('search-dropdown').style.display = 'none';
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.scan-container')) {
+                hideSearchDropdown();
             }
         });
 
@@ -900,7 +985,7 @@
             if (e.key === 'Enter') {
                 const term = this.value.trim().toLowerCase();
                 if (term) {
-                    const product = inventory.find(p => p.barcode.toLowerCase() === term || p.name.toLowerCase() === term);
+                    const product = inventory.find(p => p.barcode.toLowerCase() === term || p.name.toLowerCase().includes(term));
                     const displayBox = document.getElementById('price-display-box');
                     
                     if (product) {
@@ -916,7 +1001,7 @@
                     } else {
                         displayBox.innerHTML = `
                             <div style="color: var(--danger); font-size: 1.3rem; font-weight: bold;">❌ Producto No Encontrado</div>
-                            <p style="font-size: 0.9rem; color: #6b7280; margin-top: 5px;">Verifica el código e intentalo nuevamente</p>
+                            <p style="font-size: 0.9rem; color: #6b7280; margin-top: 5px;">Verifica el nombre o código e intentalo nuevamente</p>
                         `;
                     }
                     this.value = '';
@@ -924,7 +1009,7 @@
             }
         });
 
-        // AUTENTICACIÓN Y CONTRASEÑAS
+        // AUTENTICACIÓN Y USUARIOS
         function checkLoginState() {
             if (!currentUser) {
                 document.getElementById('login-screen').style.display = 'flex';
@@ -1153,8 +1238,16 @@
                     if (product) {
                         addToCart(product.barcode);
                         this.value = '';
+                        hideSearchDropdown();
                     } else {
-                        alert('Producto no encontrado');
+                        const matches = inventory.filter(p => p.name.toLowerCase().includes(term));
+                        if (matches.length > 0) {
+                            addToCart(matches[0].barcode);
+                            this.value = '';
+                            hideSearchDropdown();
+                        } else {
+                            alert('Producto no encontrado');
+                        }
                     }
                 }
             }
