@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Punto de Venta POS Pro (CLP)</title>
-    <!-- Favicon en formato SVG vectorial integrado directamente -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%231f2937'/><rect x='14' y='38' width='36' height='14' rx='3' fill='%2316a34a'/><path d='M22 12h20v26H22z' fill='%23ffffff'/><path d='M26 18h12M26 24h12M26 30h8' stroke='%23374151' stroke-width='2.5' stroke-linecap='round'/></svg>">
-    <!-- JsBarcode y XLSX CDN -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -37,7 +35,6 @@
             height: 100vh;
         }
 
-        /* Keyboard shortcut badge */
         .key-badge {
             background: rgba(0,0,0,0.2);
             border-radius: 4px;
@@ -386,7 +383,6 @@
         .badge-low { background: var(--warning); }
         .badge-out { background: var(--danger); }
 
-        /* Modal / Receipt / Checker */
         .modal {
             display: none;
             position: fixed;
@@ -399,19 +395,19 @@
 
         .receipt {
             background: white;
-            width: 330px;
-            padding: 20px;
-            border-radius: 8px;
+            width: 280px;
+            padding: 15px 12px;
+            border-radius: 4px;
             font-family: 'Courier New', Courier, monospace;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            color: #000;
         }
 
-        .receipt-header { text-align: center; margin-bottom: 12px; }
-        .receipt-divider { border-top: 1px dashed #000; margin: 8px 0; }
+        .receipt-header { text-align: center; margin-bottom: 10px; }
+        .receipt-divider { border-top: 1px dashed #000; margin: 6px 0; }
         .btn-close-modal { width: 100%; background: var(--gray-800); color: white; border: none; padding: 10px; margin-top: 10px; cursor: pointer; border-radius: 4px; display: flex; justify-content: center; align-items: center; }
         .btn-print { width: 100%; background: var(--primary); color: white; border: none; padding: 10px; margin-top: 10px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; justify-content: center; align-items: center; }
 
-        /* Consultador de Precios Styles */
         .price-checker-card {
             background: white;
             width: 500px;
@@ -454,24 +450,46 @@
         }
 
         @media print {
+            @page {
+                size: 80mm auto;
+                margin: 0;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
             body * { visibility: hidden; }
             .receipt, .receipt * { visibility: visible; }
-            .receipt { position: absolute; left: 0; top: 0; width: 100%; }
+            .receipt {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 80mm !important;
+                padding: 5mm !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
             .no-print { display: none !important; }
         }
     </style>
 </head>
 <body>
 
-    <!-- PANTALLA DE INICIO DE SESIÓN -->
+    <!-- PANTALLA DE INICIO DE SESIÓN CON CONTRASEÑA -->
     <div id="login-screen">
         <div class="login-card">
             <h2>🛒 POS Caja</h2>
-            <p>Selecciona tu usuario para iniciar turno</p>
+            <p>Selecciona tu usuario e ingresa tu clave</p>
             <form onsubmit="handleLogin(event)">
                 <div class="form-group">
                     <label>Vendedor / Cajero:</label>
                     <select id="user-select" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña:</label>
+                    <input type="password" id="user-password" required placeholder="Clave personal (ej: 1234)">
                 </div>
                 <button type="submit" class="btn-pay" style="padding:12px; margin-top:10px;">🔓 Iniciar Sesión <span class="key-badge">Enter</span></button>
             </form>
@@ -673,13 +691,17 @@
                 </div>
 
                 <div class="card">
-                    <div class="card-title">Gestión de Vendedores / Usuarios</div>
+                    <div class="card-title">Gestión de Vendedores y Contraseñas</div>
                     <form id="user-form" onsubmit="addUser(event)">
                         <div class="form-group">
-                            <label>Nombre del Nuevo Vendedor</label>
+                            <label>Nombre del Vendedor</label>
                             <input type="text" id="new-user-name" required placeholder="Ej: Juan Pérez">
                         </div>
-                        <button type="submit" class="btn-secondary" style="width:100%; padding:10px;">➕ Agregar Vendedor</button>
+                        <div class="form-group">
+                            <label>Contraseña Acceso</label>
+                            <input type="password" id="new-user-pass" required placeholder="Ej: 1234">
+                        </div>
+                        <button type="submit" class="btn-secondary" style="width:100%; padding:10px;">➕ Registrar Vendedor</button>
                     </form>
                     <div style="margin-top: 15px;" class="table-container">
                         <table>
@@ -697,7 +719,7 @@
         </div>
     </main>
 
-    <!-- MODAL BOLETA -->
+    <!-- MODAL BOLETA IMPRESIÓN OPTIMIZADA -->
     <div id="receipt-modal" class="modal">
         <div class="receipt">
             <div class="receipt-header">
@@ -705,33 +727,33 @@
                 <p style="font-size: 0.75rem;" id="rcp-store-rut"></p>
                 <p style="font-size: 0.75rem;" id="rcp-store-address"></p>
                 <div class="receipt-divider"></div>
-                <p style="font-size: 0.8rem;" id="rcp-date"></p>
+                <p style="font-size: 0.75rem;" id="rcp-date"></p>
                 <p style="font-size: 0.8rem; font-weight: bold;" id="rcp-id"></p>
-                <p style="font-size: 0.85rem; font-weight: bold; margin-top: 4px; color: var(--primary-dark);" id="rcp-seller"></p>
+                <p style="font-size: 0.8rem; font-weight: bold; margin-top: 2px;" id="rcp-seller"></p>
             </div>
             <div class="receipt-divider"></div>
             <div id="rcp-items"></div>
             <div class="receipt-divider"></div>
-            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1rem;">
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1rem;">
                 <span>TOTAL:</span>
                 <span id="rcp-total"></span>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 4px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 4px;">
                 <span>Método Pago:</span>
                 <span id="rcp-method"></span>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
                 <span>Pagó con:</span>
                 <span id="rcp-paid"></span>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
                 <span>Vuelto:</span>
                 <span id="rcp-change"></span>
             </div>
             <div class="receipt-divider"></div>
             <div style="text-align: center; margin-top: 8px;">
                 <svg id="barcode-receipt"></svg>
-                <p style="font-size: 0.75rem;">¡Gracias por su preferencia!</p>
+                <p style="font-size: 0.7rem; margin-top: 2px;">¡Gracias por su preferencia!</p>
             </div>
             <button class="btn-print no-print" onclick="window.print()">🖨️ Imprimir Ticket <span class="key-badge">Enter</span></button>
             <button class="btn-close-modal no-print" onclick="closeReceipt()">Cerrar / Nueva Venta <span class="key-badge">Esc</span></button>
@@ -766,7 +788,13 @@
             { barcode: '101', name: 'Café Espresso', price: 2000, stock: 0, minStock: 5 }
         ];
 
-        let users = JSON.parse(localStorage.getItem('pos_users')) || ['Cajero Principal', 'María González', 'Carlos Rojas'];
+        // Estructura de usuarios con clave protegida
+        let users = JSON.parse(localStorage.getItem('pos_users_v2')) || [
+            { name: 'Cajero Principal', pass: '1234' },
+            { name: 'María González', pass: '1234' },
+            { name: 'Carlos Rojas', pass: '1234' }
+        ];
+
         let currentUser = localStorage.getItem('pos_current_user') || null;
 
         let cart = [];
@@ -775,7 +803,7 @@
         let currentPayMethod = 'Efectivo';
         let editingBarcode = null;
 
-        // --- MANEJADOR GLOBAL DE TECLAS RÁPIDAS (HOTKEYS) ---
+        // MANEJADOR GLOBAL DE HOTKEYS
         window.addEventListener('keydown', function(e) {
             const isReceiptOpen = document.getElementById('receipt-modal').style.display === 'flex';
             const isCheckerOpen = document.getElementById('price-checker-modal').style.display === 'flex';
@@ -854,7 +882,7 @@
             }
         });
 
-        // --- CONSULTADOR DE PRECIOS ---
+        // CONSULTADOR DE PRECIOS
         function openPriceChecker() {
             document.getElementById('price-checker-modal').style.display = 'flex';
             const input = document.getElementById('price-checker-input');
@@ -896,7 +924,7 @@
             }
         });
 
-        // --- SISTEMA DE AUTENTICACIÓN Y USUARIOS ---
+        // AUTENTICACIÓN Y CONTRASEÑAS
         function checkLoginState() {
             if (!currentUser) {
                 document.getElementById('login-screen').style.display = 'flex';
@@ -910,16 +938,25 @@
 
         function renderUserSelect() {
             const select = document.getElementById('user-select');
-            select.innerHTML = users.map(u => `<option value="${u}">${u}</option>`).join('');
+            select.innerHTML = users.map(u => `<option value="${u.name}">${u.name}</option>`).join('');
         }
 
         function handleLogin(e) {
             e.preventDefault();
-            const selected = document.getElementById('user-select').value;
-            if (selected) {
-                currentUser = selected;
+            const selectedName = document.getElementById('user-select').value;
+            const enteredPass = document.getElementById('user-password').value;
+
+            const user = users.find(u => u.name === selectedName);
+
+            if (user && user.pass === enteredPass) {
+                currentUser = user.name;
                 localStorage.setItem('pos_current_user', currentUser);
+                document.getElementById('user-password').value = '';
                 checkLoginState();
+            } else {
+                alert('❌ Contraseña incorrecta. Inténtalo de nuevo.');
+                document.getElementById('user-password').value = '';
+                document.getElementById('user-password').focus();
             }
         }
 
@@ -934,15 +971,20 @@
         function addUser(e) {
             e.preventDefault();
             const nameInput = document.getElementById('new-user-name');
+            const passInput = document.getElementById('new-user-pass');
             const name = nameInput.value.trim();
-            if (name && !users.includes(name)) {
-                users.push(name);
-                localStorage.setItem('pos_users', JSON.stringify(users));
+            const pass = passInput.value.trim();
+
+            if (name && pass && !users.some(u => u.name === name)) {
+                users.push({ name, pass });
+                localStorage.setItem('pos_users_v2', JSON.stringify(users));
                 renderUsersTable();
                 renderUserSelect();
                 nameInput.value = '';
+                passInput.value = '';
+                alert('✅ Vendedor registrado correctamente con contraseña.');
             } else {
-                alert('El usuario ya existe o es inválido');
+                alert('El vendedor ya existe o los datos son inválidos.');
             }
         }
 
@@ -952,8 +994,8 @@
                 return;
             }
             if (confirm(`¿Eliminar al vendedor "${name}"?`)) {
-                users = users.filter(u => u !== name);
-                localStorage.setItem('pos_users', JSON.stringify(users));
+                users = users.filter(u => u.name !== name);
+                localStorage.setItem('pos_users_v2', JSON.stringify(users));
                 renderUsersTable();
                 renderUserSelect();
             }
@@ -963,13 +1005,13 @@
             const tbody = document.getElementById('users-table-body');
             tbody.innerHTML = users.map(u => `
                 <tr>
-                    <td><strong>${u}</strong></td>
-                    <td><button class="btn-delete" onclick="deleteUser('${u}')">Eliminar</button></td>
+                    <td><strong>${u.name}</strong></td>
+                    <td><button class="btn-delete" onclick="deleteUser('${u.name}')">Eliminar</button></td>
                 </tr>
             `).join('');
         }
 
-        // Navigation
+        // TAB NAVIGATION
         function switchTab(tabName) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -983,7 +1025,7 @@
             if (tabName === 'caja') document.getElementById('barcode-input').focus();
         }
 
-        // Metodo de Pago
+        // MÉTODO DE PAGO
         function selectPaymentMethod(method) {
             currentPayMethod = method;
             document.querySelectorAll('.pay-method-btn').forEach(b => b.classList.remove('selected'));
@@ -997,7 +1039,7 @@
             }
         }
 
-        // Inventario
+        // INVENTARIO
         function saveProduct(e) {
             e.preventDefault();
             const barcode = document.getElementById('prod-barcode').value.trim();
@@ -1102,7 +1144,7 @@
             }).join('');
         }
 
-        // Sistema Caja
+        // CAJA
         document.getElementById('barcode-input').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 const term = this.value.trim().toLowerCase();
@@ -1226,7 +1268,6 @@
                 }
             }
 
-            // Descontar Stock
             cart.forEach(cartItem => {
                 const prod = inventory.find(p => p.barcode === cartItem.barcode);
                 if (prod) prod.stock -= cartItem.qty;
@@ -1234,7 +1275,6 @@
 
             localStorage.setItem('pos_inventory', JSON.stringify(inventory));
 
-            // Registro Transacción
             const ticketId = 'T-' + String(salesHistory.length + 1).padStart(5, '0');
             const saleData = {
                 id: ticketId,
@@ -1265,7 +1305,7 @@
             
             const itemsContainer = document.getElementById('rcp-items');
             itemsContainer.innerHTML = sale.items.map(i => `
-                <div style="display:flex; justify-content:space-between; font-size:0.85rem;">
+                <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
                     <span>${i.qty}x ${i.name}</span>
                     <span>${formatCLP(i.price * i.qty)}</span>
                 </div>
@@ -1276,7 +1316,7 @@
             document.getElementById('rcp-paid').innerText = formatCLP(sale.paid);
             document.getElementById('rcp-change').innerText = formatCLP(sale.change);
 
-            JsBarcode("#barcode-receipt", sale.id, { format: "CODE128", width: 1.5, height: 35, displayValue: false });
+            JsBarcode("#barcode-receipt", sale.id, { format: "CODE128", width: 1.3, height: 30, displayValue: false });
 
             document.getElementById('receipt-modal').style.display = 'flex';
         }
@@ -1308,7 +1348,6 @@
             showReceipt(saleData);
         }
 
-        // Exportar a Excel
         function exportSalesToExcel() {
             if(salesHistory.length === 0) {
                 alert('No hay ventas registradas para exportar.');
@@ -1332,7 +1371,6 @@
             XLSX.writeFile(wb, `Reporte_Ventas_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
-        // Configuración
         function saveConfig(e) {
             e.preventDefault();
             storeConfig = {
@@ -1350,7 +1388,6 @@
             document.getElementById('cfg-address').value = storeConfig.address || '';
         }
 
-        // Inicializar
         checkLoginState();
         renderInventory();
         renderSales();
