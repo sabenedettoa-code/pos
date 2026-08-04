@@ -852,7 +852,7 @@
         </div>
     </div>
 
-    <!-- MODAL BOLETA IMPRESIÓN OPTIMIZADA -->
+    <!-- MODAL BOLETA IMPRESIÓN OPTIMIZADA (INCLUYE AHORRO DE SOCIO) -->
     <div id="receipt-modal" class="modal">
         <div class="receipt">
             <div class="receipt-header">
@@ -872,7 +872,13 @@
                 <span>TOTAL:</span>
                 <span id="rcp-total"></span>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 4px;">
+            
+            <!-- DETALLE AHORRO SOCIO IMPRESO -->
+            <div id="rcp-savings-box" style="display:none; text-align:center; margin-top:6px; font-size:0.8rem; font-weight:bold; border: 1px dashed #16a34a; padding: 4px; border-radius: 4px;">
+                <span>¡AHORRASTE <span id="rcp-savings-amount">$0</span> CON TU DESCUENTO DE SOCIO/A!</span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 6px;">
                 <span>Método Pago:</span>
                 <span id="rcp-method"></span>
             </div>
@@ -1573,6 +1579,7 @@
                 isoDate: now.toISOString().slice(0, 10),
                 seller: currentUser || 'Vendedor General',
                 member: selectedMember ? `${selectedMember.name} (${selectedMember.discount}% Desc.)` : 'Cliente General',
+                savings: discountAmount,
                 method: currentPayMethod,
                 items: [...cart],
                 total: total,
@@ -1620,7 +1627,7 @@
             }
         }
 
-        // ARQUEO DE CAJA Y REPORTE Z (CORREGIDO PARA IMPRESIÓN)
+        // ARQUEO DE CAJA Y REPORTE Z
         function openArqueoModal() {
             const now = new Date();
             const today = now.toISOString().slice(0, 10);
@@ -1653,7 +1660,7 @@
             document.getElementById('rcp-id').innerText = `TICKET: ${sale.id}`;
             document.getElementById('rcp-date').innerText = sale.date;
             document.getElementById('rcp-seller').innerText = `Vendedor: ${sale.seller}`;
-            document.getElementById('rcp-member').innerText = sale.member ? `Socio: ${sale.member}` : '';
+            document.getElementById('rcp-member').innerText = sale.member && sale.member !== 'Cliente General' ? `Socio: ${sale.member}` : '';
             
             const itemsContainer = document.getElementById('rcp-items');
             itemsContainer.innerHTML = sale.items.map(i => `
@@ -1664,6 +1671,16 @@
             `).join('');
 
             document.getElementById('rcp-total').innerText = formatCLP(sale.total);
+
+            // Muestra el total ahorrado si aplica
+            const savingsBox = document.getElementById('rcp-savings-box');
+            if (sale.savings && sale.savings > 0) {
+                document.getElementById('rcp-savings-amount').innerText = formatCLP(sale.savings);
+                savingsBox.style.display = 'block';
+            } else {
+                savingsBox.style.display = 'none';
+            }
+
             document.getElementById('rcp-method').innerText = sale.method;
             document.getElementById('rcp-paid').innerText = formatCLP(sale.paid);
             document.getElementById('rcp-change').innerText = formatCLP(sale.change);
@@ -1726,6 +1743,7 @@
                 'Fecha y Hora': s.date,
                 'Vendedor': s.seller || 'General',
                 'Socio/a': s.member || 'Cliente General',
+                'Ahorro Socio CLP': s.savings || 0,
                 'Método de Pago': s.method,
                 'Total CLP': s.total,
                 'Estado': s.canceled ? 'Anulada' : 'Completada'
