@@ -343,12 +343,13 @@
         }
 
         .pay-method-btn {
-            padding: 10px;
+            padding: 12px 6px;
             border: 2px solid var(--gray-200);
             background: white;
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 0.95rem;
             text-align: center;
             display: flex;
             justify-content: center;
@@ -430,7 +431,6 @@
             padding: 20px 0;
         }
 
-        /* DISEÑO DE BOLETA AJUSTADO AL ANCHO REAL */
         .receipt {
             background: white;
             width: 320px;
@@ -511,7 +511,6 @@
             background-color: #fee2e2;
         }
 
-        /* ESCALADO PERFECTO PARA IMPRESORA TÉRMICA */
         #barcode-receipt {
             max-width: 100%;
             height: auto;
@@ -641,14 +640,31 @@
                         </div>
                     </div>
 
+                    <!-- MÉTODOS DE PAGO PRINCIPALES -->
                     <div style="margin-top: 15px;">
                         <label style="font-size: 0.85rem; font-weight: bold;">Método de Pago:</label>
                         <div class="payment-methods">
-                            <button type="button" class="pay-method-btn selected" id="method-efectivo" onclick="selectPaymentMethod('Efectivo')">💵 Efectivo <span class="key-badge">F7</span></button>
-                            <button type="button" class="pay-method-btn" id="method-tarjeta" onclick="selectPaymentMethod('Tarjeta/Debito')">💳 Tarjeta <span class="key-badge">F8</span></button>
+                            <button type="button" class="pay-method-btn selected" id="method-efectivo" onclick="selectPaymentMethod('Efectivo')">
+                                💵 Efectivo <span class="key-badge">F7</span>
+                            </button>
+                            <button type="button" class="pay-method-btn" id="method-tarjeta" onclick="selectPaymentMethod('Tarjeta')">
+                                💳 Tarjeta <span class="key-badge">F8</span>
+                            </button>
                         </div>
                     </div>
 
+                    <!-- DESGLOSE TIPO DE TARJETA (Aparece únicamente cuando se selecciona Tarjeta) -->
+                    <div id="card-type-section" style="margin-top: 12px; display: none;">
+                        <div class="form-group">
+                            <label style="color: var(--primary-dark);">Tipo de Tarjeta:</label>
+                            <select id="card-type-select" style="border: 2px solid var(--primary); font-weight: bold;">
+                                <option value="Tarjeta Débito">💳 Débito</option>
+                                <option value="Tarjeta Crédito">💳 Crédito</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- CAMPO MONTO Y VUELTO EN EFECTIVO -->
                     <div id="cash-payment-section" style="margin-top: 15px;">
                         <label style="font-size: 0.85rem; font-weight: bold;">Monto Recibido (CLP):</label>
                         <input type="number" id="payment-amount" class="payment-input" placeholder="0" oninput="calculateChange()">
@@ -851,7 +867,7 @@
         </div>
     </main>
 
-    <!-- MODAL ARQUEO Y CIERRE DE CAJA (Z) -->
+    <!-- MODAL ARQUEO Y CIERRE DE CAJA (Z) CON DESGLOSE DÉBITO Y CRÉDITO -->
     <div id="arqueo-modal" class="modal">
         <div class="receipt">
             <div class="receipt-sii-box">
@@ -864,7 +880,8 @@
             <div class="receipt-divider"></div>
             <div class="summary-box" style="margin-top:5px; background: transparent; padding: 0;">
                 <div class="summary-row" style="font-size: 0.8rem;"><span>Ventas Efectivo:</span><strong id="z-efectivo">$0</strong></div>
-                <div class="summary-row" style="font-size: 0.8rem;"><span>Ventas Tarjeta:</span><strong id="z-tarjeta">$0</strong></div>
+                <div class="summary-row" style="font-size: 0.8rem;"><span>Ventas Débito:</span><strong id="z-debito">$0</strong></div>
+                <div class="summary-row" style="font-size: 0.8rem;"><span>Ventas Crédito:</span><strong id="z-credito">$0</strong></div>
                 <div class="receipt-divider"></div>
                 <div class="summary-row total" style="font-size: 1rem; padding-top: 4px;"><span>TOTAL DÍA:</span><span id="z-total">$0</span></div>
             </div>
@@ -877,7 +894,6 @@
     <!-- MODAL BOLETA IMPRESIÓN REALISTA TIPO CHILE (SII) -->
     <div id="receipt-modal" class="modal">
         <div class="receipt">
-            <!-- RECUADRO FISCAL SII -->
             <div class="receipt-sii-box">
                 <div style="font-size: 0.85rem;">R.U.T.: <span id="rcp-store-rut">76.543.210-K</span></div>
                 <div style="font-size: 0.9rem; margin: 2px 0;">BOLETA ELECTRÓNICA</div>
@@ -900,7 +916,6 @@
 
             <div class="receipt-divider"></div>
 
-            <!-- ENCABEZADO DE TABLA DE ÍTEMS -->
             <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 0.75rem; margin-bottom: 4px;">
                 <span style="width: 15%;">CANT</span>
                 <span style="width: 55%;">DETALLE</span>
@@ -910,7 +925,6 @@
 
             <div class="receipt-divider"></div>
 
-            <!-- TOTALES Y DESGLOSE IVA 19% -->
             <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05rem; margin-top: 4px;">
                 <span>TOTAL:</span>
                 <span id="rcp-total">$0</span>
@@ -925,7 +939,6 @@
                 <span id="rcp-iva">$0</span>
             </div>
 
-            <!-- DETALLE DE AHORRO -->
             <div id="rcp-savings-box" style="display:none; text-align:center; margin-top:6px; font-size:0.75rem; font-weight:bold; border: 1px dashed #000; padding: 4px;">
                 <span>*** AHORRO SOCIO: <span id="rcp-savings-amount">$0</span> ***</span>
             </div>
@@ -947,7 +960,6 @@
 
             <div class="receipt-divider"></div>
 
-            <!-- TIMBRE ELECTRÓNICO TIPO SII -->
             <div style="text-align: center; margin-top: 6px;">
                 <svg id="barcode-receipt"></svg>
                 <div style="font-size: 0.65rem; font-weight: bold; margin-top: 4px;">Timbre Electrónico S.I.I.</div>
@@ -980,7 +992,6 @@
     <script>
         const formatCLP = (amount) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
 
-        // FORMATEADOR DE FECHA Y HORA EN 24 HORAS
         function getFormattedDate24H(dateObj = new Date()) {
             const day = String(dateObj.getDate()).padStart(2, '0');
             const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -992,7 +1003,6 @@
             return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
         }
 
-        // REPRODUCTOR DE SONIDOS SINTETIZADOS (BEEP)
         function playSound(type = 'success') {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1002,12 +1012,12 @@
                 gain.connect(ctx.destination);
 
                 if (type === 'success') {
-                    osc.frequency.value = 1046.5; // Do alto
+                    osc.frequency.value = 1046.5;
                     gain.gain.setValueAtTime(0.1, ctx.currentTime);
                     osc.start();
                     osc.stop(ctx.currentTime + 0.1);
                 } else if (type === 'error') {
-                    osc.frequency.value = 220; // Tono bajo de error
+                    osc.frequency.value = 220;
                     gain.gain.setValueAtTime(0.2, ctx.currentTime);
                     osc.start();
                     osc.stop(ctx.currentTime + 0.3);
@@ -1015,7 +1025,6 @@
             } catch (e) { }
         }
 
-        // CONTROL DE INACTIVIDAD (5 MINUTOS)
         let inactivityTimer;
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
@@ -1023,14 +1032,13 @@
                 inactivityTimer = setTimeout(() => {
                     alert('🔒 Sesión cerrada automáticamente por inactividad.');
                     logout(true);
-                }, 300000); // 5 minutos
+                }, 300000);
             }
         }
         window.onload = resetInactivityTimer;
         window.onmousemove = resetInactivityTimer;
         window.onkeydown = resetInactivityTimer;
 
-        // Estado Global
         let inventory = JSON.parse(localStorage.getItem('pos_inventory')) || [
             { barcode: '780123456789', name: 'Coca Cola 1.5L', price: 1800, offerPrice: 1500, stock: 25, minStock: 5 },
             { barcode: '780987654321', name: 'Pan Hallulla 1Kg', price: 1600, offerPrice: null, stock: 4, minStock: 10 },
@@ -1056,7 +1064,6 @@
         let editingBarcode = null;
         let selectedMember = null;
 
-        // HOTKEYS
         window.addEventListener('keydown', function(e) {
             const isReceiptOpen = document.getElementById('receipt-modal').style.display === 'flex';
             const isCheckerOpen = document.getElementById('price-checker-modal').style.display === 'flex';
@@ -1081,7 +1088,7 @@
                 case 'F12': e.preventDefault(); processPayment(); break;
                 case 'F6': e.preventDefault(); clearCart(); break;
                 case 'F7': e.preventDefault(); selectPaymentMethod('Efectivo'); break;
-                case 'F8': e.preventDefault(); selectPaymentMethod('Tarjeta/Debito'); break;
+                case 'F8': e.preventDefault(); selectPaymentMethod('Tarjeta'); break;
                 case 'F9': e.preventDefault(); logout(); break;
                 case 'F10': e.preventDefault(); resetAllStock(); break;
                 case 'F11': e.preventDefault(); openPriceChecker(); break;
@@ -1095,7 +1102,6 @@
             }
         });
 
-        // BUSCADOR EN VIVO
         function handleSearchInput(val) {
             const dropdown = document.getElementById('search-dropdown');
             const term = val.trim().toLowerCase();
@@ -1141,7 +1147,6 @@
             if (!e.target.closest('.scan-container')) hideSearchDropdown();
         });
 
-        // CONSULTADOR DE PRECIOS
         function openPriceChecker() {
             document.getElementById('price-checker-modal').style.display = 'flex';
             const input = document.getElementById('price-checker-input');
@@ -1188,7 +1193,6 @@
             }
         });
 
-        // LOGIN Y USUARIOS
         function checkLoginState() {
             if (!currentUser) {
                 document.getElementById('login-screen').style.display = 'flex';
@@ -1275,7 +1279,6 @@
             `).join('');
         }
 
-        // SOCIOS
         function addMember(e) {
             e.preventDefault();
             const name = document.getElementById('new-member-name').value.trim();
@@ -1325,7 +1328,6 @@
             renderCart();
         }
 
-        // NAVEGACIÓN DE PESTAÑAS
         function switchTab(tabName) {
             const userObj = users.find(u => u.name === currentUser);
             
@@ -1347,20 +1349,23 @@
             if (tabName === 'caja') document.getElementById('barcode-input').focus();
         }
 
+        // SELECCIÓN DE MÉTODOS DE PAGO: EFECTIVO / TARJETA (DÉBITO O CRÉDITO)
         function selectPaymentMethod(method) {
             currentPayMethod = method;
             document.querySelectorAll('.pay-method-btn').forEach(b => b.classList.remove('selected'));
-            if(method === 'Efectivo') {
+            
+            if (method === 'Efectivo') {
                 document.getElementById('method-efectivo').classList.add('selected');
                 document.getElementById('cash-payment-section').style.display = 'block';
+                document.getElementById('card-type-section').style.display = 'none';
                 document.getElementById('payment-amount').focus();
-            } else {
+            } else if (method === 'Tarjeta') {
                 document.getElementById('method-tarjeta').classList.add('selected');
                 document.getElementById('cash-payment-section').style.display = 'none';
+                document.getElementById('card-type-section').style.display = 'block';
             }
         }
 
-        // INVENTARIO
         function saveProduct(e) {
             e.preventDefault();
             const barcode = document.getElementById('prod-barcode').value.trim();
@@ -1468,7 +1473,6 @@
             }).join('');
         }
 
-        // CAJA
         document.getElementById('barcode-input').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 const term = this.value.trim().toLowerCase();
@@ -1624,6 +1628,7 @@
             const discountAmount = selectedMember ? Math.round(subtotal * (selectedMember.discount / 100)) : 0;
             const total = subtotal - discountAmount;
 
+            let finalPayMethod = currentPayMethod;
             let payment = total;
 
             if (currentPayMethod === 'Efectivo') {
@@ -1633,6 +1638,8 @@
                     alert('El dinero ingresado es menor al total.');
                     return;
                 }
+            } else if (currentPayMethod === 'Tarjeta') {
+                finalPayMethod = document.getElementById('card-type-select').value;
             }
 
             cart.forEach(cartItem => {
@@ -1651,7 +1658,7 @@
                 seller: currentUser || 'Vendedor General',
                 member: selectedMember ? `${selectedMember.name} (${selectedMember.discount}% Desc.)` : 'Cliente General',
                 savings: discountAmount,
-                method: currentPayMethod,
+                method: finalPayMethod,
                 items: [...cart],
                 total: total,
                 paid: payment,
@@ -1668,7 +1675,6 @@
             renderSales();
         }
 
-        // ANULACIÓN DE BOLETAS Y DEVOLUCIÓN DE STOCK
         function cancelSale(ticketId) {
             const userObj = users.find(u => u.name === currentUser);
             if (!userObj || userObj.role !== 'admin') {
@@ -1682,7 +1688,6 @@
                 if (sale && !sale.canceled) {
                     sale.canceled = true;
 
-                    // Devolver productos al stock
                     sale.items.forEach(item => {
                         const prod = inventory.find(p => p.barcode === item.barcode);
                         if (prod) prod.stock += item.qty;
@@ -1698,20 +1703,22 @@
             }
         }
 
-        // ARQUEO DE CAJA Y REPORTE Z
+        // CIERRE Z CON DESGLOSE DE EFECTIVO, DÉBITO Y CRÉDITO
         function openArqueoModal() {
             const now = new Date();
             const today = now.toISOString().slice(0, 10);
             const todaysSales = salesHistory.filter(s => s.isoDate === today && !s.canceled);
 
             const efectivoTotal = todaysSales.filter(s => s.method === 'Efectivo').reduce((sum, s) => sum + s.total, 0);
-            const tarjetaTotal = todaysSales.filter(s => s.method === 'Tarjeta/Debito').reduce((sum, s) => sum + s.total, 0);
+            const debitoTotal = todaysSales.filter(s => s.method === 'Tarjeta Débito').reduce((sum, s) => sum + s.total, 0);
+            const creditoTotal = todaysSales.filter(s => s.method === 'Tarjeta Crédito').reduce((sum, s) => sum + s.total, 0);
 
             document.getElementById('z-date').innerText = `Fecha: ${getFormattedDate24H(now)}`;
             document.getElementById('z-user').innerText = `Cajero: ${currentUser || 'General'}`;
             document.getElementById('z-efectivo').innerText = formatCLP(efectivoTotal);
-            document.getElementById('z-tarjeta').innerText = formatCLP(tarjetaTotal);
-            document.getElementById('z-total').innerText = formatCLP(efectivoTotal + tarjetaTotal);
+            document.getElementById('z-debito').innerText = formatCLP(debitoTotal);
+            document.getElementById('z-credito').innerText = formatCLP(creditoTotal);
+            document.getElementById('z-total').innerText = formatCLP(efectivoTotal + debitoTotal + creditoTotal);
 
             document.getElementById('arqueo-modal').style.display = 'flex';
         }
@@ -1742,7 +1749,6 @@
                 </div>
             `).join('');
 
-            // Cálculo Neto e IVA 19%
             const neto = Math.round(sale.total / 1.19);
             const iva = sale.total - neto;
 
@@ -1750,7 +1756,6 @@
             document.getElementById('rcp-neto').innerText = formatCLP(neto);
             document.getElementById('rcp-iva').innerText = formatCLP(iva);
 
-            // Muestra el total ahorrado si aplica
             const savingsBox = document.getElementById('rcp-savings-box');
             if (sale.savings && sale.savings > 0) {
                 document.getElementById('rcp-savings-amount').innerText = formatCLP(sale.savings);
@@ -1763,7 +1768,6 @@
             document.getElementById('rcp-paid').innerText = formatCLP(sale.paid);
             document.getElementById('rcp-change').innerText = formatCLP(sale.change);
 
-            // Código de Barras formato Timbre Criptográfico escalado
             JsBarcode("#barcode-receipt", `SII-CL-${sale.id}-${sale.total}`, { format: "CODE128", width: 1.1, height: 35, displayValue: false, margin: 0 });
 
             document.getElementById('receipt-modal').style.display = 'flex';
