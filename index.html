@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Punto de Venta POS Pro (CLP) - Versión Final</title>
+    <title>Sistema Punto de Venta POS Pro (CLP)</title>
     <!-- Favicon en formato SVG vectorial -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%231f2937'/><rect x='14' y='38' width='36' height='14' rx='3' fill='%2316a34a'/><path d='M22 12h20v26H22z' fill='%23ffffff'/><path d='M26 18h12M26 24h12M26 30h8' stroke='%23374151' stroke-width='2.5' stroke-linecap='round'/></svg>">
     <!-- JsBarcode y XLSX CDN -->
@@ -426,21 +426,35 @@
             justify-content: center;
             align-items: center;
             z-index: 999;
+            overflow-y: auto;
+            padding: 20px 0;
         }
 
+        /* DISEÑO DE BOLETA AJUSTADO AL ANCHO REAL */
         .receipt {
             background: white;
-            width: 280px;
+            width: 320px;
             padding: 15px 12px;
-            border-radius: 4px;
+            border-radius: 6px;
             font-family: 'Courier New', Courier, monospace;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             color: #000;
+            font-size: 0.8rem;
+            line-height: 1.2;
+            margin: auto;
         }
 
-        .receipt-header { text-align: center; margin-bottom: 10px; }
+        .receipt-sii-box {
+            border: 2px solid #000;
+            text-align: center;
+            padding: 6px;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .receipt-header { text-align: center; margin-bottom: 8px; }
         .receipt-divider { border-top: 1px dashed #000; margin: 6px 0; }
-        .btn-close-modal { width: 100%; background: var(--gray-800); color: white; border: none; padding: 10px; margin-top: 10px; cursor: pointer; border-radius: 4px; display: flex; justify-content: center; align-items: center; }
+        .btn-close-modal { width: 100%; background: var(--gray-800); color: white; border: none; padding: 10px; margin-top: 8px; cursor: pointer; border-radius: 4px; display: flex; justify-content: center; align-items: center; }
         .btn-print { width: 100%; background: var(--primary); color: white; border: none; padding: 10px; margin-top: 10px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; justify-content: center; align-items: center; }
 
         .price-checker-card {
@@ -497,9 +511,15 @@
             background-color: #fee2e2;
         }
 
+        /* ESCALADO PERFECTO PARA IMPRESORA TÉRMICA */
+        #barcode-receipt {
+            max-width: 100%;
+            height: auto;
+        }
+
         @media print {
             @page {
-                size: 80mm auto;
+                size: 58mm auto;
                 margin: 0;
             }
             body {
@@ -514,8 +534,8 @@
                 position: absolute;
                 left: 0;
                 top: 0;
-                width: 80mm !important;
-                padding: 5mm !important;
+                width: 58mm !important;
+                padding: 2mm !important;
                 box-shadow: none !important;
                 border-radius: 0 !important;
             }
@@ -831,20 +851,22 @@
         </div>
     </main>
 
-    <!-- MODAL ARQUEO Y CIERRE DE CAJA (Z) OPTIMIZADO -->
+    <!-- MODAL ARQUEO Y CIERRE DE CAJA (Z) -->
     <div id="arqueo-modal" class="modal">
         <div class="receipt">
-            <div class="receipt-header">
-                <h3>REPORTE DE CIERRE (Z)</h3>
-                <p style="font-size: 0.75rem;" id="z-date"></p>
-                <p style="font-size: 0.8rem; font-weight: bold;" id="z-user"></p>
+            <div class="receipt-sii-box">
+                <div>REPORTE DE CIERRE (Z)</div>
+                <div style="font-size: 0.7rem; margin-top: 2px;" id="z-date"></div>
+            </div>
+            <div style="text-align: center; margin-bottom: 6px;">
+                <p style="font-size: 0.75rem; font-weight: bold;" id="z-user"></p>
             </div>
             <div class="receipt-divider"></div>
-            <div class="summary-box" style="margin-top:10px; background: transparent; padding: 0;">
-                <div class="summary-row" style="font-size: 0.85rem;"><span>Efectivo:</span><strong id="z-efectivo">$0</strong></div>
-                <div class="summary-row" style="font-size: 0.85rem;"><span>Tarjeta/Débito:</span><strong id="z-tarjeta">$0</strong></div>
+            <div class="summary-box" style="margin-top:5px; background: transparent; padding: 0;">
+                <div class="summary-row" style="font-size: 0.8rem;"><span>Ventas Efectivo:</span><strong id="z-efectivo">$0</strong></div>
+                <div class="summary-row" style="font-size: 0.8rem;"><span>Ventas Tarjeta:</span><strong id="z-tarjeta">$0</strong></div>
                 <div class="receipt-divider"></div>
-                <div class="summary-row total" style="font-size: 1.1rem; padding-top: 4px;"><span>TOTAL DÍA:</span><span id="z-total">$0</span></div>
+                <div class="summary-row total" style="font-size: 1rem; padding-top: 4px;"><span>TOTAL DÍA:</span><span id="z-total">$0</span></div>
             </div>
             <div class="receipt-divider"></div>
             <button class="btn-pay no-print" onclick="window.print()" style="padding: 10px; font-size: 1rem;">🖨️ Imprimir Reporte Z</button>
@@ -852,50 +874,87 @@
         </div>
     </div>
 
-    <!-- MODAL BOLETA IMPRESIÓN OPTIMIZADA (INCLUYE AHORRO DE SOCIO) -->
+    <!-- MODAL BOLETA IMPRESIÓN REALISTA TIPO CHILE (SII) -->
     <div id="receipt-modal" class="modal">
         <div class="receipt">
-            <div class="receipt-header">
-                <h3 id="rcp-store-name">MI TIENDA</h3>
-                <p style="font-size: 0.75rem;" id="rcp-store-rut"></p>
-                <p style="font-size: 0.75rem;" id="rcp-store-address"></p>
-                <div class="receipt-divider"></div>
-                <p style="font-size: 0.75rem;" id="rcp-date"></p>
-                <p style="font-size: 0.8rem; font-weight: bold;" id="rcp-id"></p>
-                <p style="font-size: 0.8rem; font-weight: bold; margin-top: 2px;" id="rcp-seller"></p>
-                <p style="font-size: 0.8rem; font-weight: bold; color: var(--success);" id="rcp-member"></p>
-            </div>
-            <div class="receipt-divider"></div>
-            <div id="rcp-items"></div>
-            <div class="receipt-divider"></div>
-            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1rem;">
-                <span>TOTAL:</span>
-                <span id="rcp-total"></span>
-            </div>
-            
-            <!-- DETALLE AHORRO SOCIO IMPRESO -->
-            <div id="rcp-savings-box" style="display:none; text-align:center; margin-top:6px; font-size:0.8rem; font-weight:bold; border: 1px dashed #16a34a; padding: 4px; border-radius: 4px;">
-                <span>¡AHORRASTE <span id="rcp-savings-amount">$0</span> CON TU DESCUENTO DE SOCIO/A!</span>
+            <!-- RECUADRO FISCAL SII -->
+            <div class="receipt-sii-box">
+                <div style="font-size: 0.85rem;">R.U.T.: <span id="rcp-store-rut">76.543.210-K</span></div>
+                <div style="font-size: 0.9rem; margin: 2px 0;">BOLETA ELECTRÓNICA</div>
+                <div style="font-size: 0.7rem;">S.I.I. - SANTIAGO CENTRO</div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 6px;">
-                <span>Método Pago:</span>
+            <div class="receipt-header">
+                <h3 id="rcp-store-name" style="font-size: 0.95rem; text-transform: uppercase;">MI TIENDA</h3>
+                <p style="font-size: 0.75rem;" id="rcp-store-address"></p>
+                <div class="receipt-divider"></div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+                    <span>Fecha: <span id="rcp-date"></span></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top:2px;">
+                    <span id="rcp-id" style="font-weight: bold;">N° 000000</span>
+                    <span id="rcp-seller"></span>
+                </div>
+                <p style="font-size: 0.75rem; font-weight: bold; color: var(--success); margin-top: 2px; text-align: left;" id="rcp-member"></p>
+            </div>
+
+            <div class="receipt-divider"></div>
+
+            <!-- ENCABEZADO DE TABLA DE ÍTEMS -->
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 0.75rem; margin-bottom: 4px;">
+                <span style="width: 15%;">CANT</span>
+                <span style="width: 55%;">DETALLE</span>
+                <span style="width: 30%; text-align: right;">TOTAL</span>
+            </div>
+            <div id="rcp-items"></div>
+
+            <div class="receipt-divider"></div>
+
+            <!-- TOTALES Y DESGLOSE IVA 19% -->
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05rem; margin-top: 4px;">
+                <span>TOTAL:</span>
+                <span id="rcp-total">$0</span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #4b5563; margin-top: 2px;">
+                <span>Monto Neto:</span>
+                <span id="rcp-neto">$0</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #4b5563;">
+                <span>19% I.V.A. incluido:</span>
+                <span id="rcp-iva">$0</span>
+            </div>
+
+            <!-- DETALLE DE AHORRO -->
+            <div id="rcp-savings-box" style="display:none; text-align:center; margin-top:6px; font-size:0.75rem; font-weight:bold; border: 1px dashed #000; padding: 4px;">
+                <span>*** AHORRO SOCIO: <span id="rcp-savings-amount">$0</span> ***</span>
+            </div>
+
+            <div class="receipt-divider"></div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+                <span>Forma de Pago:</span>
                 <span id="rcp-method"></span>
             </div>
             <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
-                <span>Pagó con:</span>
+                <span>Monto Entregado:</span>
                 <span id="rcp-paid"></span>
             </div>
             <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
                 <span>Vuelto:</span>
                 <span id="rcp-change"></span>
             </div>
+
             <div class="receipt-divider"></div>
-            <div style="text-align: center; margin-top: 8px;">
+
+            <!-- TIMBRE ELECTRÓNICO TIPO SII -->
+            <div style="text-align: center; margin-top: 6px;">
                 <svg id="barcode-receipt"></svg>
-                <p style="font-size: 0.7rem; margin-top: 2px;">¡Gracias por su preferencia!</p>
+                <div style="font-size: 0.65rem; font-weight: bold; margin-top: 4px;">Timbre Electrónico S.I.I.</div>
+                <div style="font-size: 0.6rem;">Res. Exenta N° 80 del 2014 - Verifique documento en www.sii.cl</div>
             </div>
-            <button class="btn-print no-print" onclick="window.print()">🖨️ Imprimir Ticket <span class="key-badge">Enter</span></button>
+
+            <button class="btn-print no-print" onclick="window.print()">🖨️ Imprimir Boleta <span class="key-badge">Enter</span></button>
             <button class="btn-close-modal no-print" onclick="closeReceipt()">Cerrar / Nueva Venta <span class="key-badge">Esc</span></button>
         </div>
     </div>
@@ -920,6 +979,18 @@
 
     <script>
         const formatCLP = (amount) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
+
+        // FORMATEADOR DE FECHA Y HORA EN 24 HORAS
+        function getFormattedDate24H(dateObj = new Date()) {
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const year = dateObj.getFullYear();
+            const hours = String(dateObj.getHours()).padStart(2, '0');
+            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+            const seconds = String(dateObj.getSeconds()).padStart(2, '0');
+
+            return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+        }
 
         // REPRODUCTOR DE SONIDOS SINTETIZADOS (BEEP)
         function playSound(type = 'success') {
@@ -980,7 +1051,7 @@
 
         let cart = [];
         let salesHistory = JSON.parse(localStorage.getItem('pos_sales')) || [];
-        let storeConfig = JSON.parse(localStorage.getItem('pos_config')) || { name: 'MI ALMACÉN / TIENDA', rut: '76.543.210-K', address: 'Santiago, Chile' };
+        let storeConfig = JSON.parse(localStorage.getItem('pos_config')) || { name: 'MI ALMACÉN / TIENDA', rut: '76.543.210-K', address: 'Av. Providencia 1234, Santiago' };
         let currentPayMethod = 'Efectivo';
         let editingBarcode = null;
         let selectedMember = null;
@@ -1572,10 +1643,10 @@
             localStorage.setItem('pos_inventory', JSON.stringify(inventory));
 
             const now = new Date();
-            const ticketId = 'T-' + String(salesHistory.length + 1).padStart(5, '0');
+            const ticketId = String(salesHistory.length + 101).padStart(6, '0');
             const saleData = {
                 id: ticketId,
-                date: now.toLocaleString('es-CL'),
+                date: getFormattedDate24H(now),
                 isoDate: now.toISOString().slice(0, 10),
                 seller: currentUser || 'Vendedor General',
                 member: selectedMember ? `${selectedMember.name} (${selectedMember.discount}% Desc.)` : 'Cliente General',
@@ -1606,7 +1677,7 @@
                 return;
             }
 
-            if (confirm(`¿Anular el ticket ${ticketId}? Se devolverán los productos al stock.`)) {
+            if (confirm(`¿Anular la boleta N° ${ticketId}? Se devolverán los productos al stock.`)) {
                 const sale = salesHistory.find(s => s.id === ticketId);
                 if (sale && !sale.canceled) {
                     sale.canceled = true;
@@ -1622,7 +1693,7 @@
 
                     renderInventory();
                     renderSales();
-                    alert('✅ Ticket anulado con éxito y stock devuelto.');
+                    alert('✅ Boleta anulada con éxito y stock devuelto.');
                 }
             }
         }
@@ -1636,7 +1707,7 @@
             const efectivoTotal = todaysSales.filter(s => s.method === 'Efectivo').reduce((sum, s) => sum + s.total, 0);
             const tarjetaTotal = todaysSales.filter(s => s.method === 'Tarjeta/Debito').reduce((sum, s) => sum + s.total, 0);
 
-            document.getElementById('z-date').innerText = `Fecha: ${now.toLocaleString('es-CL')}`;
+            document.getElementById('z-date').innerText = `Fecha: ${getFormattedDate24H(now)}`;
             document.getElementById('z-user').innerText = `Cajero: ${currentUser || 'General'}`;
             document.getElementById('z-efectivo').innerText = formatCLP(efectivoTotal);
             document.getElementById('z-tarjeta').innerText = formatCLP(tarjetaTotal);
@@ -1655,22 +1726,29 @@
 
         function showReceipt(sale) {
             document.getElementById('rcp-store-name').innerText = storeConfig.name;
-            document.getElementById('rcp-store-rut').innerText = storeConfig.rut ? `RUT: ${storeConfig.rut}` : '';
+            document.getElementById('rcp-store-rut').innerText = storeConfig.rut || '76.543.210-K';
             document.getElementById('rcp-store-address').innerText = storeConfig.address || '';
-            document.getElementById('rcp-id').innerText = `TICKET: ${sale.id}`;
+            document.getElementById('rcp-id').innerText = `N° ${sale.id}`;
             document.getElementById('rcp-date').innerText = sale.date;
-            document.getElementById('rcp-seller').innerText = `Vendedor: ${sale.seller}`;
+            document.getElementById('rcp-seller').innerText = `Cajero: ${sale.seller}`;
             document.getElementById('rcp-member').innerText = sale.member && sale.member !== 'Cliente General' ? `Socio: ${sale.member}` : '';
             
             const itemsContainer = document.getElementById('rcp-items');
             itemsContainer.innerHTML = sale.items.map(i => `
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
-                    <span>${i.qty}x ${i.name}</span>
-                    <span>${formatCLP((i.priceToCharge || i.price) * i.qty)}</span>
+                <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom: 2px;">
+                    <span style="width: 15%;">${i.qty}</span>
+                    <span style="width: 55%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${i.name}</span>
+                    <span style="width: 30%; text-align:right;">${formatCLP((i.priceToCharge || i.price) * i.qty)}</span>
                 </div>
             `).join('');
 
+            // Cálculo Neto e IVA 19%
+            const neto = Math.round(sale.total / 1.19);
+            const iva = sale.total - neto;
+
             document.getElementById('rcp-total').innerText = formatCLP(sale.total);
+            document.getElementById('rcp-neto').innerText = formatCLP(neto);
+            document.getElementById('rcp-iva').innerText = formatCLP(iva);
 
             // Muestra el total ahorrado si aplica
             const savingsBox = document.getElementById('rcp-savings-box');
@@ -1685,7 +1763,8 @@
             document.getElementById('rcp-paid').innerText = formatCLP(sale.paid);
             document.getElementById('rcp-change').innerText = formatCLP(sale.change);
 
-            JsBarcode("#barcode-receipt", sale.id, { format: "CODE128", width: 1.3, height: 30, displayValue: false });
+            // Código de Barras formato Timbre Criptográfico escalado
+            JsBarcode("#barcode-receipt", `SII-CL-${sale.id}-${sale.total}`, { format: "CODE128", width: 1.1, height: 35, displayValue: false, margin: 0 });
 
             document.getElementById('receipt-modal').style.display = 'flex';
         }
@@ -1718,7 +1797,7 @@
 
                 return `
                     <tr class="${s.canceled ? 'canceled-row' : ''}">
-                        <td><code>${s.id}</code></td>
+                        <td><code>N° ${s.id}</code></td>
                         <td>${s.date}</td>
                         <td><strong>${s.seller || 'General'}</strong></td>
                         <td>${s.member || 'Cliente General'}</td>
@@ -1739,7 +1818,7 @@
             if(salesHistory.length === 0) { alert('No hay ventas para exportar.'); return; }
 
             const dataToExport = salesHistory.map(s => ({
-                'N° Ticket': s.id,
+                'N° Boleta': s.id,
                 'Fecha y Hora': s.date,
                 'Vendedor': s.seller || 'General',
                 'Socio/a': s.member || 'Cliente General',
@@ -1752,7 +1831,7 @@
             const ws = XLSX.utils.json_to_sheet(dataToExport);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Historial_Ventas");
-            XLSX.writeFile(wb, `Reporte_Ventas_${new Date().toISOString().slice(0,10)}.xlsx`);
+            XLSX.writeFile(wb, `Reporte_Boletas_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
         function saveConfig(e) {
