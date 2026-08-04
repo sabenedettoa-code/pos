@@ -417,6 +417,7 @@
         .badge-ok { background: var(--success); }
         .badge-low { background: var(--warning); }
         .badge-out { background: var(--danger); }
+        .badge-promo { background: #8b5cf6; }
 
         .modal {
             display: none;
@@ -482,6 +483,13 @@
             font-size: 1rem;
             color: var(--gray-700);
             margin-top: 5px;
+        }
+
+        .strike-price {
+            text-decoration: line-through;
+            color: #9ca3af;
+            font-size: 0.85rem;
+            margin-right: 4px;
         }
 
         @media print {
@@ -558,6 +566,15 @@
                         <span class="card-title">Venta Actual</span>
                         <button class="btn-delete" onclick="clearCart()">Limpiar Carro <span class="key-badge">F6</span></button>
                     </div>
+
+                    <!-- SELECCIÓN DE SOCIO/A -->
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label>Socio/a del Almacén (Opcional):</label>
+                        <select id="cart-member-select" onchange="applyMemberDiscount()">
+                            <option value="">-- Cliente General (Sin Descuento) --</option>
+                        </select>
+                    </div>
+
                     <div class="scan-container">
                         <div class="scan-box">
                             <input type="text" id="barcode-input" placeholder="🔍 Escribe nombre o escanea código... (Presiona Esc para enfocar)" autofocus oninput="handleSearchInput(this.value)" autocomplete="off">
@@ -587,6 +604,10 @@
                         <div class="summary-row">
                             <span>Artículos:</span>
                             <span id="cart-count">0</span>
+                        </div>
+                        <div class="summary-row" id="member-discount-row" style="display:none; color: var(--success); font-weight: bold;">
+                            <span>Descuento Socio/a:</span>
+                            <span id="cart-member-discount">-$0</span>
                         </div>
                         <div class="summary-row total">
                             <span>TOTAL:</span>
@@ -634,8 +655,12 @@
                             <input type="text" id="prod-name" required placeholder="Ej: Bebida 1.5L">
                         </div>
                         <div class="form-group">
-                            <label>Precio de Venta (CLP)</label>
+                            <label>Precio Normal (CLP)</label>
                             <input type="number" id="prod-price" required min="0" placeholder="Ej: 1500">
+                        </div>
+                        <div class="form-group">
+                            <label>Precio Oferta (CLP - Opcional)</label>
+                            <input type="number" id="prod-offer-price" min="0" placeholder="Ej: 1200 (dejar vacío si no hay oferta)">
                         </div>
                         <div class="form-group">
                             <label>Stock Disponible</label>
@@ -664,7 +689,8 @@
                                 <tr>
                                     <th>Código</th>
                                     <th>Producto</th>
-                                    <th>Precio</th>
+                                    <th>Precio Normal</th>
+                                    <th>Precio Oferta</th>
                                     <th>Stock</th>
                                     <th>Estado</th>
                                     <th>Acción</th>
@@ -693,6 +719,7 @@
                                 <th>N° Ticket</th>
                                 <th>Fecha y Hora</th>
                                 <th>Vendedor</th>
+                                <th>Socio/a</th>
                                 <th>Método</th>
                                 <th>Total (CLP)</th>
                                 <th>Pagó con</th>
@@ -726,6 +753,36 @@
                         </div>
                         <button type="submit" class="btn-pay" style="padding:10px;">💾 Guardar Datos</button>
                     </form>
+
+                    <div class="card-title" style="margin-top:25px;">Gestión de Socios/as del Almacén</div>
+                    <form id="member-form" onsubmit="addMember(event)">
+                        <div class="form-group">
+                            <label>Nombre Socio/a</label>
+                            <input type="text" id="new-member-name" required placeholder="Ej: Ana Silva">
+                        </div>
+                        <div class="form-group">
+                            <label>RUT / DNI</label>
+                            <input type="text" id="new-member-rut" required placeholder="Ej: 12.345.678-9">
+                        </div>
+                        <div class="form-group">
+                            <label>% Descuento Socio</label>
+                            <input type="number" id="new-member-discount" required min="1" max="100" value="10" placeholder="Ej: 10">
+                        </div>
+                        <button type="submit" class="btn-pay" style="padding:10px;">🤝 Registrar Socio/a</button>
+                    </form>
+                    <div style="margin-top: 15px;" class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Socio/a</th>
+                                    <th>RUT</th>
+                                    <th>Descuento</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="members-table-body"></tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div class="card">
@@ -736,16 +793,24 @@
                             <input type="text" id="new-user-name" required placeholder="Ej: Juan Pérez">
                         </div>
                         <div class="form-group">
+                            <label>Rol de Usuario</label>
+                            <select id="new-user-role" required>
+                                <option value="cajero">Cajero / Vendedor</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
                             <label>Contraseña Acceso</label>
                             <input type="password" id="new-user-pass" required placeholder="Ej: 1234">
                         </div>
-                        <button type="submit" class="btn-secondary" style="width:100%; padding:10px;">➕ Registrar Vendedor</button>
+                        <button type="submit" class="btn-secondary" style="width:100%; padding:10px;">➕ Registrar Usuario</button>
                     </form>
                     <div style="margin-top: 15px;" class="table-container">
                         <table>
                             <thead>
                                 <tr>
                                     <th>Nombre Vendedor</th>
+                                    <th>Rol</th>
                                     <th>Acción</th>
                                 </tr>
                             </thead>
@@ -768,6 +833,7 @@
                 <p style="font-size: 0.75rem;" id="rcp-date"></p>
                 <p style="font-size: 0.8rem; font-weight: bold;" id="rcp-id"></p>
                 <p style="font-size: 0.8rem; font-weight: bold; margin-top: 2px;" id="rcp-seller"></p>
+                <p style="font-size: 0.8rem; font-weight: bold; color: var(--success);" id="rcp-member"></p>
             </div>
             <div class="receipt-divider"></div>
             <div id="rcp-items"></div>
@@ -821,15 +887,19 @@
 
         // Estado Global
         let inventory = JSON.parse(localStorage.getItem('pos_inventory')) || [
-            { barcode: '780123456789', name: 'Coca Cola 1.5L', price: 1800, stock: 25, minStock: 5 },
-            { barcode: '780987654321', name: 'Pan Hallulla 1Kg', price: 1600, stock: 4, minStock: 10 },
-            { barcode: '101', name: 'Café Espresso', price: 2000, stock: 0, minStock: 5 }
+            { barcode: '780123456789', name: 'Coca Cola 1.5L', price: 1800, offerPrice: 1500, stock: 25, minStock: 5 },
+            { barcode: '780987654321', name: 'Pan Hallulla 1Kg', price: 1600, offerPrice: null, stock: 4, minStock: 10 },
+            { barcode: '101', name: 'Café Espresso', price: 2000, offerPrice: 1600, stock: 0, minStock: 5 }
         ];
 
         let users = JSON.parse(localStorage.getItem('pos_users_v2')) || [
-            { name: 'Cajero Principal', pass: '1234' },
-            { name: 'María González', pass: '1234' },
-            { name: 'Carlos Rojas', pass: '1234' }
+            { name: 'Administrador', pass: '1234', role: 'admin' },
+            { name: 'María González', pass: '1234', role: 'cajero' },
+            { name: 'Carlos Rojas', pass: '1234', role: 'cajero' }
+        ];
+
+        let members = JSON.parse(localStorage.getItem('pos_members')) || [
+            { name: 'Ana Silva', rut: '12.345.678-9', discount: 10 }
         ];
 
         let currentUser = localStorage.getItem('pos_current_user') || null;
@@ -839,6 +909,7 @@
         let storeConfig = JSON.parse(localStorage.getItem('pos_config')) || { name: 'MI ALMACÉN / TIENDA', rut: '76.543.210-K', address: 'Santiago, Chile' };
         let currentPayMethod = 'Efectivo';
         let editingBarcode = null;
+        let selectedMember = null;
 
         // MANEJADOR GLOBAL DE HOTKEYS
         window.addEventListener('keydown', function(e) {
@@ -935,15 +1006,22 @@
             );
 
             if (matches.length > 0) {
-                dropdown.innerHTML = matches.slice(0, 6).map(p => `
-                    <div class="search-result-item" onclick="selectSearchMatch('${p.barcode}')">
-                        <div>
-                            <strong>${p.name}</strong>
-                            <div style="font-size:0.75rem; color:#6b7280;">Código: ${p.barcode} | Stock: ${p.stock} u.</div>
+                dropdown.innerHTML = matches.slice(0, 6).map(p => {
+                    const activePrice = (p.offerPrice && p.offerPrice > 0) ? p.offerPrice : p.price;
+                    const priceTag = (p.offerPrice && p.offerPrice > 0) 
+                        ? `<span class="strike-price">${formatCLP(p.price)}</span> ${formatCLP(p.offerPrice)} 🔥` 
+                        : formatCLP(p.price);
+
+                    return `
+                        <div class="search-result-item" onclick="selectSearchMatch('${p.barcode}')">
+                            <div>
+                                <strong>${p.name}</strong>
+                                <div style="font-size:0.75rem; color:#6b7280;">Código: ${p.barcode} | Stock: ${p.stock} u.</div>
+                            </div>
+                            <div style="font-weight:bold; color:var(--primary-dark);">${priceTag}</div>
                         </div>
-                        <div style="font-weight:bold; color:var(--primary-dark);">${formatCLP(p.price)}</div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
                 dropdown.style.display = 'block';
             } else {
                 dropdown.style.display = 'none';
@@ -993,9 +1071,13 @@
                         if (product.stock === 0) stockBadge = `<span class="badge badge-out">Agotado (0 u.)</span>`;
                         else if (product.stock <= (product.minStock || 5)) stockBadge = `<span class="badge badge-low">Bajo Stock (${product.stock} u.)</span>`;
 
+                        const priceHtml = (product.offerPrice && product.offerPrice > 0)
+                            ? `<span class="strike-price" style="font-size:2rem;">${formatCLP(product.price)}</span> ${formatCLP(product.offerPrice)} <span class="badge badge-promo">OFERTA 🔥</span>`
+                            : formatCLP(product.price);
+
                         displayBox.innerHTML = `
                             <div class="price-product-name">${product.name}</div>
-                            <div class="price-tag">${formatCLP(product.price)}</div>
+                            <div class="price-tag">${priceHtml}</div>
                             <div class="price-stock-info">Código: <code>${product.barcode}</code> | ${stockBadge}</div>
                         `;
                     } else {
@@ -1023,7 +1105,7 @@
 
         function renderUserSelect() {
             const select = document.getElementById('user-select');
-            select.innerHTML = users.map(u => `<option value="${u.name}">${u.name}</option>`).join('');
+            select.innerHTML = users.map(u => `<option value="${u.name}">${u.name} (${u.role === 'admin' ? 'Admin' : 'Cajero'})</option>`).join('');
         }
 
         function handleLogin(e) {
@@ -1049,6 +1131,7 @@
             if (confirm('¿Cerrar sesión actual?')) {
                 currentUser = null;
                 localStorage.removeItem('pos_current_user');
+                switchTab('caja');
                 checkLoginState();
             }
         }
@@ -1057,28 +1140,30 @@
             e.preventDefault();
             const nameInput = document.getElementById('new-user-name');
             const passInput = document.getElementById('new-user-pass');
+            const roleSelect = document.getElementById('new-user-role');
             const name = nameInput.value.trim();
             const pass = passInput.value.trim();
+            const role = roleSelect.value;
 
             if (name && pass && !users.some(u => u.name === name)) {
-                users.push({ name, pass });
+                users.push({ name, pass, role });
                 localStorage.setItem('pos_users_v2', JSON.stringify(users));
                 renderUsersTable();
                 renderUserSelect();
                 nameInput.value = '';
                 passInput.value = '';
-                alert('✅ Vendedor registrado correctamente con contraseña.');
+                alert('✅ Usuario registrado correctamente.');
             } else {
-                alert('El vendedor ya existe o los datos son inválidos.');
+                alert('El usuario ya existe o los datos son inválidos.');
             }
         }
 
         function deleteUser(name) {
             if (users.length <= 1) {
-                alert('Debe existir al menos un vendedor en el sistema.');
+                alert('Debe existir al menos un usuario en el sistema.');
                 return;
             }
-            if (confirm(`¿Eliminar al vendedor "${name}"?`)) {
+            if (confirm(`¿Eliminar al usuario "${name}"?`)) {
                 users = users.filter(u => u.name !== name);
                 localStorage.setItem('pos_users_v2', JSON.stringify(users));
                 renderUsersTable();
@@ -1091,13 +1176,73 @@
             tbody.innerHTML = users.map(u => `
                 <tr>
                     <td><strong>${u.name}</strong></td>
+                    <td><span class="badge ${u.role === 'admin' ? 'badge-ok' : 'badge-low'}">${u.role === 'admin' ? 'Administrador' : 'Cajero'}</span></td>
                     <td><button class="btn-delete" onclick="deleteUser('${u.name}')">Eliminar</button></td>
                 </tr>
             `).join('');
         }
 
-        // TAB NAVIGATION
+        // GESTIÓN DE SOCIOS/AS
+        function addMember(e) {
+            e.preventDefault();
+            const name = document.getElementById('new-member-name').value.trim();
+            const rut = document.getElementById('new-member-rut').value.trim();
+            const discount = parseInt(document.getElementById('new-member-discount').value) || 0;
+
+            if (name && rut && !members.some(m => m.rut === rut)) {
+                members.push({ name, rut, discount });
+                localStorage.setItem('pos_members', JSON.stringify(members));
+                renderMembersTable();
+                renderMemberSelect();
+                document.getElementById('member-form').reset();
+                alert('✅ Socio/a registrado/a exitosamente.');
+            } else {
+                alert('El RUT ya existe o los datos son inválidos.');
+            }
+        }
+
+        function deleteMember(rut) {
+            if (confirm('¿Eliminar a este socio/a?')) {
+                members = members.filter(m => m.rut !== rut);
+                localStorage.setItem('pos_members', JSON.stringify(members));
+                renderMembersTable();
+                renderMemberSelect();
+            }
+        }
+
+        function renderMembersTable() {
+            const tbody = document.getElementById('members-table-body');
+            tbody.innerHTML = members.map(m => `
+                <tr>
+                    <td><strong>${m.name}</strong></td>
+                    <td><code>${m.rut}</code></td>
+                    <td><span class="badge badge-promo">${m.discount}% OFF</span></td>
+                    <td><button class="btn-delete" onclick="deleteMember('${m.rut}')">Eliminar</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderMemberSelect() {
+            const select = document.getElementById('cart-member-select');
+            select.innerHTML = '<option value="">-- Cliente General (Sin Descuento) --</option>' +
+                members.map(m => `<option value="${m.rut}">${m.name} (${m.rut}) - ${m.discount}% Descuento</option>`).join('');
+        }
+
+        function applyMemberDiscount() {
+            const rut = document.getElementById('cart-member-select').value;
+            selectedMember = members.find(m => m.rut === rut) || null;
+            renderCart();
+        }
+
+        // TAB NAVIGATION CON CONTROL DE ACCESO
         function switchTab(tabName) {
+            const userObj = users.find(u => u.name === currentUser);
+            
+            if ((tabName === 'config' || tabName === 'inventario') && (!userObj || userObj.role !== 'admin')) {
+                alert('🔒 Acceso denegado: Solo el Administrador puede ingresar a este módulo.');
+                return;
+            }
+
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
@@ -1130,6 +1275,8 @@
             const barcode = document.getElementById('prod-barcode').value.trim();
             const name = document.getElementById('prod-name').value.trim();
             const price = parseInt(document.getElementById('prod-price').value);
+            const offerPriceVal = document.getElementById('prod-offer-price').value;
+            const offerPrice = offerPriceVal ? parseInt(offerPriceVal) : null;
             const stock = parseInt(document.getElementById('prod-stock').value);
             const minStock = parseInt(document.getElementById('prod-min-stock').value) || 5;
 
@@ -1146,9 +1293,9 @@
 
             if (editingBarcode) {
                 const idx = inventory.findIndex(p => p.barcode === editingBarcode);
-                if(idx > -1) inventory[idx] = { barcode, name, price, stock, minStock };
+                if(idx > -1) inventory[idx] = { barcode, name, price, offerPrice, stock, minStock };
             } else {
-                inventory.push({ barcode, name, price, stock, minStock });
+                inventory.push({ barcode, name, price, offerPrice, stock, minStock });
             }
 
             localStorage.setItem('pos_inventory', JSON.stringify(inventory));
@@ -1166,6 +1313,7 @@
             document.getElementById('prod-barcode').value = prod.barcode;
             document.getElementById('prod-name').value = prod.name;
             document.getElementById('prod-price').value = prod.price;
+            document.getElementById('prod-offer-price').value = prod.offerPrice || '';
             document.getElementById('prod-stock').value = prod.stock;
             document.getElementById('prod-min-stock').value = prod.minStock || 5;
 
@@ -1213,11 +1361,16 @@
                 if (p.stock === 0) badge = '<span class="badge badge-out">Agotado</span>';
                 else if (p.stock <= (p.minStock || 5)) badge = '<span class="badge badge-low">Bajo Stock</span>';
 
+                const offerDisplay = (p.offerPrice && p.offerPrice > 0) 
+                    ? `<strong style="color:var(--success);">${formatCLP(p.offerPrice)}</strong>` 
+                    : '<span style="color:#9ca3af;">Sin oferta</span>';
+
                 return `
                     <tr>
                         <td><code>${p.barcode}</code></td>
                         <td>${p.name}</td>
                         <td>${formatCLP(p.price)}</td>
+                        <td>${offerDisplay}</td>
                         <td>${p.stock} u.</td>
                         <td>${badge}</td>
                         <td>
@@ -1262,6 +1415,8 @@
                 return;
             }
 
+            const activePrice = (product.offerPrice && product.offerPrice > 0) ? product.offerPrice : product.price;
+
             const cartItem = cart.find(item => item.barcode === barcode);
             if (cartItem) {
                 if (cartItem.qty + 1 > product.stock) {
@@ -1270,7 +1425,7 @@
                 }
                 cartItem.qty += 1;
             } else {
-                cart.push({ ...product, qty: 1 });
+                cart.push({ ...product, priceToCharge: activePrice, qty: 1 });
             }
 
             renderCart();
@@ -1298,28 +1453,48 @@
 
         function clearCart() {
             cart = [];
+            selectedMember = null;
+            document.getElementById('cart-member-select').value = '';
             renderCart();
         }
 
         function renderCart() {
             const tbody = document.getElementById('cart-table-body');
-            tbody.innerHTML = cart.map(item => `
-                <tr>
-                    <td><code>${item.barcode}</code></td>
-                    <td>${item.name}</td>
-                    <td>${formatCLP(item.price)}</td>
-                    <td>
-                        <button class="btn-qty" onclick="updateQty('${item.barcode}', -1)">-</button>
-                        <span style="margin: 0 5px; font-weight:bold;">${item.qty}</span>
-                        <button class="btn-qty" onclick="updateQty('${item.barcode}', 1)">+</button>
-                    </td>
-                    <td>${formatCLP(item.price * item.qty)}</td>
-                    <td><button class="btn-delete" onclick="removeFromCart('${item.barcode}')">X</button></td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = cart.map(item => {
+                const isOffer = item.offerPrice && item.offerPrice > 0;
+                const priceTag = isOffer 
+                    ? `<span class="strike-price">${formatCLP(item.price)}</span> ${formatCLP(item.priceToCharge)}`
+                    : formatCLP(item.priceToCharge);
 
-            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+                return `
+                    <tr>
+                        <td><code>${item.barcode}</code></td>
+                        <td>${item.name} ${isOffer ? '<span class="badge badge-promo">OFERTA</span>' : ''}</td>
+                        <td>${priceTag}</td>
+                        <td>
+                            <button class="btn-qty" onclick="updateQty('${item.barcode}', -1)">-</button>
+                            <span style="margin: 0 5px; font-weight:bold;">${item.qty}</span>
+                            <button class="btn-qty" onclick="updateQty('${item.barcode}', 1)">+</button>
+                        </td>
+                        <td>${formatCLP(item.priceToCharge * item.qty)}</td>
+                        <td><button class="btn-delete" onclick="removeFromCart('${item.barcode}')">X</button></td>
+                    </tr>
+                `;
+            }).join('');
+
+            const subtotal = cart.reduce((sum, item) => sum + (item.priceToCharge * item.qty), 0);
             const count = cart.reduce((sum, item) => sum + item.qty, 0);
+
+            let discountAmount = 0;
+            if (selectedMember) {
+                discountAmount = Math.round(subtotal * (selectedMember.discount / 100));
+                document.getElementById('member-discount-row').style.display = 'flex';
+                document.getElementById('cart-member-discount').innerText = `-${formatCLP(discountAmount)} (${selectedMember.discount}%)`;
+            } else {
+                document.getElementById('member-discount-row').style.display = 'none';
+            }
+
+            const total = subtotal - discountAmount;
 
             document.getElementById('cart-total').innerText = formatCLP(total);
             document.getElementById('cart-count').innerText = count;
@@ -1328,7 +1503,10 @@
         }
 
         function calculateChange() {
-            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const subtotal = cart.reduce((sum, item) => sum + (item.priceToCharge * item.qty), 0);
+            const discountAmount = selectedMember ? Math.round(subtotal * (selectedMember.discount / 100)) : 0;
+            const total = subtotal - discountAmount;
+
             const payment = parseInt(document.getElementById('payment-amount').value) || 0;
             const change = payment - total;
 
@@ -1350,7 +1528,10 @@
                 return;
             }
 
-            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const subtotal = cart.reduce((sum, item) => sum + (item.priceToCharge * item.qty), 0);
+            const discountAmount = selectedMember ? Math.round(subtotal * (selectedMember.discount / 100)) : 0;
+            const total = subtotal - discountAmount;
+
             let payment = total;
 
             if (currentPayMethod === 'Efectivo') {
@@ -1373,6 +1554,7 @@
                 id: ticketId,
                 date: new Date().toLocaleString('es-CL'),
                 seller: currentUser || 'Vendedor General',
+                member: selectedMember ? `${selectedMember.name} (${selectedMember.discount}% Desc.)` : 'Cliente General',
                 method: currentPayMethod,
                 items: [...cart],
                 total: total,
@@ -1395,12 +1577,13 @@
             document.getElementById('rcp-id').innerText = `TICKET: ${sale.id}`;
             document.getElementById('rcp-date').innerText = sale.date;
             document.getElementById('rcp-seller').innerText = `Vendedor: ${sale.seller}`;
+            document.getElementById('rcp-member').innerText = sale.member ? `Socio: ${sale.member}` : '';
             
             const itemsContainer = document.getElementById('rcp-items');
             itemsContainer.innerHTML = sale.items.map(i => `
                 <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
                     <span>${i.qty}x ${i.name}</span>
-                    <span>${formatCLP(i.price * i.qty)}</span>
+                    <span>${formatCLP(i.priceToCharge * i.qty)}</span>
                 </div>
             `).join('');
 
@@ -1428,6 +1611,7 @@
                     <td><code>${s.id}</code></td>
                     <td>${s.date}</td>
                     <td><strong>${s.seller || 'General'}</strong></td>
+                    <td>${s.member || 'Cliente General'}</td>
                     <td>${s.method}</td>
                     <td><strong>${formatCLP(s.total)}</strong></td>
                     <td>${formatCLP(s.paid)}</td>
@@ -1451,6 +1635,7 @@
                 'N° Ticket': s.id,
                 'Fecha y Hora': s.date,
                 'Vendedor': s.seller || 'General',
+                'Socio/a': s.member || 'Cliente General',
                 'Método de Pago': s.method,
                 'Total CLP': s.total,
                 'Monto Pagado': s.paid,
@@ -1485,6 +1670,8 @@
         renderInventory();
         renderSales();
         renderUsersTable();
+        renderMembersTable();
+        renderMemberSelect();
         loadConfigForm();
     </script>
 </body>
