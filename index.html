@@ -428,14 +428,6 @@
             z-index: 999;
         }
 
-        .modal-card {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            width: 450px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-
         .receipt {
             background: white;
             width: 280px;
@@ -839,18 +831,24 @@
         </div>
     </main>
 
-    <!-- MODAL ARQUEO Y CIERRE DE CAJA (Z) -->
+    <!-- MODAL ARQUEO Y CIERRE DE CAJA (Z) OPTIMIZADO -->
     <div id="arqueo-modal" class="modal">
-        <div class="modal-card">
-            <h2>📊 Cierre y Arqueo de Caja (Z)</h2>
-            <div class="summary-box" style="margin-top:15px;">
-                <div class="summary-row"><span>Total Efectivo Recaudado:</span><strong id="z-efectivo">$0</strong></div>
-                <div class="summary-row"><span>Total Tarjeta Recaudado:</span><strong id="z-tarjeta">$0</strong></div>
-                <div class="summary-row total"><span>TOTAL DIA:</span><span id="z-total">$0</span></div>
+        <div class="receipt">
+            <div class="receipt-header">
+                <h3>REPORTE DE CIERRE (Z)</h3>
+                <p style="font-size: 0.75rem;" id="z-date"></p>
+                <p style="font-size: 0.8rem; font-weight: bold;" id="z-user"></p>
             </div>
-            <p style="font-size:0.8rem; color:#6b7280; margin-top:10px; text-align:center;">Genera el resumen impreso del turno para el cierre diario.</p>
-            <button class="btn-pay" onclick="printArqueoZ()">🖨️ Imprimir Reporte Z</button>
-            <button class="btn-close-modal" onclick="closeArqueoModal()">Cerrar / Volver</button>
+            <div class="receipt-divider"></div>
+            <div class="summary-box" style="margin-top:10px; background: transparent; padding: 0;">
+                <div class="summary-row" style="font-size: 0.85rem;"><span>Efectivo:</span><strong id="z-efectivo">$0</strong></div>
+                <div class="summary-row" style="font-size: 0.85rem;"><span>Tarjeta/Débito:</span><strong id="z-tarjeta">$0</strong></div>
+                <div class="receipt-divider"></div>
+                <div class="summary-row total" style="font-size: 1.1rem; padding-top: 4px;"><span>TOTAL DÍA:</span><span id="z-total">$0</span></div>
+            </div>
+            <div class="receipt-divider"></div>
+            <button class="btn-pay no-print" onclick="window.print()" style="padding: 10px; font-size: 1rem;">🖨️ Imprimir Reporte Z</button>
+            <button class="btn-close-modal no-print" onclick="closeArqueoModal()">Cerrar / Volver</button>
         </div>
     </div>
 
@@ -1622,14 +1620,17 @@
             }
         }
 
-        // ARQUEO DE CAJA Y REPORTE Z
+        // ARQUEO DE CAJA Y REPORTE Z (CORREGIDO PARA IMPRESIÓN)
         function openArqueoModal() {
-            const today = new Date().toISOString().slice(0, 10);
+            const now = new Date();
+            const today = now.toISOString().slice(0, 10);
             const todaysSales = salesHistory.filter(s => s.isoDate === today && !s.canceled);
 
             const efectivoTotal = todaysSales.filter(s => s.method === 'Efectivo').reduce((sum, s) => sum + s.total, 0);
             const tarjetaTotal = todaysSales.filter(s => s.method === 'Tarjeta/Debito').reduce((sum, s) => sum + s.total, 0);
 
+            document.getElementById('z-date').innerText = `Fecha: ${now.toLocaleString('es-CL')}`;
+            document.getElementById('z-user').innerText = `Cajero: ${currentUser || 'General'}`;
             document.getElementById('z-efectivo').innerText = formatCLP(efectivoTotal);
             document.getElementById('z-tarjeta').innerText = formatCLP(tarjetaTotal);
             document.getElementById('z-total').innerText = formatCLP(efectivoTotal + tarjetaTotal);
