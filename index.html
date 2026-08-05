@@ -431,21 +431,26 @@
             padding: 20px 0;
         }
 
+        /* BOLETA TÉRMICA 100% NEGRO PURO (#000000) */
         .receipt {
-            background: white;
+            background: #ffffff;
             width: 320px;
             padding: 15px 12px;
-            border-radius: 6px;
+            border-radius: 4px;
             font-family: 'Courier New', Courier, monospace;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            color: #000;
+            color: #000000 !important;
             font-size: 0.8rem;
-            line-height: 1.2;
+            line-height: 1.25;
             margin: auto;
         }
 
+        .receipt * {
+            color: #000000 !important;
+        }
+
         .receipt-sii-box {
-            border: 2px solid #000;
+            border: 2px solid #000000;
             text-align: center;
             padding: 6px;
             margin-bottom: 8px;
@@ -453,9 +458,10 @@
         }
 
         .receipt-header { text-align: center; margin-bottom: 8px; }
-        .receipt-divider { border-top: 1px dashed #000; margin: 6px 0; }
-        .btn-close-modal { width: 100%; background: var(--gray-800); color: white; border: none; padding: 10px; margin-top: 8px; cursor: pointer; border-radius: 4px; display: flex; justify-content: center; align-items: center; }
-        .btn-print { width: 100%; background: var(--primary); color: white; border: none; padding: 10px; margin-top: 10px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; justify-content: center; align-items: center; }
+        .receipt-divider { border-top: 1px dashed #000000; margin: 6px 0; }
+        
+        .btn-close-modal { width: 100%; background: var(--gray-800); color: white !important; border: none; padding: 10px; margin-top: 8px; cursor: pointer; border-radius: 4px; display: flex; justify-content: center; align-items: center; }
+        .btn-print { width: 100%; background: var(--primary); color: white !important; border: none; padding: 10px; margin-top: 10px; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; justify-content: center; align-items: center; }
 
         .price-checker-card {
             background: white;
@@ -528,7 +534,10 @@
                 padding: 0 !important;
             }
             body * { visibility: hidden; }
-            .receipt, .receipt * { visibility: visible; }
+            .receipt, .receipt * { 
+                visibility: visible; 
+                color: #000000 !important;
+            }
             .receipt {
                 position: absolute;
                 left: 0;
@@ -653,7 +662,7 @@
                         </div>
                     </div>
 
-                    <!-- DESGLOSE TIPO DE TARJETA (Aparece únicamente cuando se selecciona Tarjeta) -->
+                    <!-- DESGLOSE TIPO DE TARJETA -->
                     <div id="card-type-section" style="margin-top: 12px; display: none;">
                         <div class="form-group">
                             <label style="color: var(--primary-dark);">Tipo de Tarjeta:</label>
@@ -867,7 +876,7 @@
         </div>
     </main>
 
-    <!-- MODAL ARQUEO Y CIERRE DE CAJA (Z) CON DESGLOSE DÉBITO Y CRÉDITO -->
+    <!-- MODAL ARQUEO Y CIERRE DE CAJA (Z) EN NEGRO PURO -->
     <div id="arqueo-modal" class="modal">
         <div class="receipt">
             <div class="receipt-sii-box">
@@ -891,9 +900,10 @@
         </div>
     </div>
 
-    <!-- MODAL BOLETA IMPRESIÓN REALISTA TIPO CHILE (SII) -->
+    <!-- MODAL BOLETA IMPRESIÓN 100% NEGRO PURO TIPO CHILE (SII) -->
     <div id="receipt-modal" class="modal">
         <div class="receipt">
+            <!-- RECUADRO FISCAL SII -->
             <div class="receipt-sii-box">
                 <div style="font-size: 0.85rem;">R.U.T.: <span id="rcp-store-rut">76.543.210-K</span></div>
                 <div style="font-size: 0.9rem; margin: 2px 0;">BOLETA ELECTRÓNICA</div>
@@ -911,11 +921,12 @@
                     <span id="rcp-id" style="font-weight: bold;">N° 000000</span>
                     <span id="rcp-seller"></span>
                 </div>
-                <p style="font-size: 0.75rem; font-weight: bold; color: var(--success); margin-top: 2px; text-align: left;" id="rcp-member"></p>
+                <p style="font-size: 0.75rem; font-weight: bold; margin-top: 2px; text-align: left;" id="rcp-member"></p>
             </div>
 
             <div class="receipt-divider"></div>
 
+            <!-- ENCABEZADO DE TABLA DE ÍTEMS -->
             <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 0.75rem; margin-bottom: 4px;">
                 <span style="width: 15%;">CANT</span>
                 <span style="width: 55%;">DETALLE</span>
@@ -925,21 +936,23 @@
 
             <div class="receipt-divider"></div>
 
+            <!-- TOTALES Y DESGLOSE IVA 19% EN NEGRO INTENSO -->
             <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05rem; margin-top: 4px;">
                 <span>TOTAL:</span>
                 <span id="rcp-total">$0</span>
             </div>
             
-            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #4b5563; margin-top: 2px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 2px;">
                 <span>Monto Neto:</span>
                 <span id="rcp-neto">$0</span>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #4b5563;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
                 <span>19% I.V.A. incluido:</span>
                 <span id="rcp-iva">$0</span>
             </div>
 
-            <div id="rcp-savings-box" style="display:none; text-align:center; margin-top:6px; font-size:0.75rem; font-weight:bold; border: 1px dashed #000; padding: 4px;">
+            <!-- DETALLE DE AHORRO EN NEGRO NEGRITA -->
+            <div id="rcp-savings-box" style="display:none; text-align:center; margin-top:6px; font-size:0.75rem; font-weight:bold; border: 1px dashed #000000; padding: 4px;">
                 <span>*** AHORRO SOCIO: <span id="rcp-savings-amount">$0</span> ***</span>
             </div>
 
@@ -960,6 +973,7 @@
 
             <div class="receipt-divider"></div>
 
+            <!-- TIMBRE ELECTRÓNICO TIPO SII EN NEGRO PURO -->
             <div style="text-align: center; margin-top: 6px;">
                 <svg id="barcode-receipt"></svg>
                 <div style="font-size: 0.65rem; font-weight: bold; margin-top: 4px;">Timbre Electrónico S.I.I.</div>
@@ -1349,7 +1363,6 @@
             if (tabName === 'caja') document.getElementById('barcode-input').focus();
         }
 
-        // SELECCIÓN DE MÉTODOS DE PAGO: EFECTIVO / TARJETA (DÉBITO O CRÉDITO)
         function selectPaymentMethod(method) {
             currentPayMethod = method;
             document.querySelectorAll('.pay-method-btn').forEach(b => b.classList.remove('selected'));
@@ -1703,7 +1716,6 @@
             }
         }
 
-        // CIERRE Z CON DESGLOSE DE EFECTIVO, DÉBITO Y CRÉDITO
         function openArqueoModal() {
             const now = new Date();
             const today = now.toISOString().slice(0, 10);
