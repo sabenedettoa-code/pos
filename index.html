@@ -596,6 +596,88 @@
         @media(max-width:700px){ main{padding:12px}.dashboard-grid,.metric-strip,.grid-2{grid-template-columns:1fr}.header-right{width:100%;justify-content:flex-end}.payment-methods{grid-template-columns:1fr}.card{padding:14px} }
 
     </style>
+
+
+    <style id="v2-realism-polish">
+        :root{
+            --surface:#ffffff;--surface-soft:#f8fafc;--border:#e2e8f0;--muted:#64748b;
+            --shadow-sm:0 1px 2px rgba(15,23,42,.05);--shadow-md:0 8px 24px rgba(15,23,42,.08);
+        }
+        html,body{min-width:320px;background:#f1f5f9;}
+        body{height:100dvh;overflow:hidden;letter-spacing:-.005em;}
+        header{min-height:64px;background:linear-gradient(180deg,#111827 0%,#0f172a 100%);border-bottom:1px solid rgba(255,255,255,.08);box-shadow:0 3px 16px rgba(15,23,42,.18);}
+        .logo{min-width:max-content;font-size:1.05rem;letter-spacing:-.02em;}
+        .logo::after{content:'OPERACIÓN LOCAL';font-size:.58rem;letter-spacing:.12em;color:#94a3b8;margin-left:2px;font-weight:700;}
+        .nav-tabs{overflow-x:auto;scrollbar-width:none;white-space:nowrap;max-width:100%;padding:2px 0;}
+        .nav-tabs::-webkit-scrollbar{display:none;}
+        .tab-btn{min-height:38px;border:1px solid transparent;white-space:nowrap;}
+        .tab-btn.active{box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 4px 10px rgba(37,99,235,.22);}
+        .tab-btn[disabled]{opacity:.38;cursor:not-allowed;filter:grayscale(.2);}
+        .header-right{white-space:nowrap;}
+        .system-strip{height:34px;flex:0 0 34px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:.75rem;color:var(--muted);box-shadow:var(--shadow-sm);z-index:20;}
+        .system-strip-left,.system-strip-right{display:flex;align-items:center;gap:16px;min-width:0;}
+        .system-pill{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+        .live-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.12);}
+        #system-store-name{max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;color:#334155;}
+        main{padding:18px 20px 22px;background:#f1f5f9;}
+        .card,.kpi-card{border:1px solid var(--border);box-shadow:var(--shadow-sm);}
+        .card{border-radius:12px;}
+        .card:hover{box-shadow:0 5px 18px rgba(15,23,42,.055);}
+        .kpi-card{position:relative;overflow:hidden;border-radius:12px;background:linear-gradient(180deg,#fff 0%,#fbfdff 100%);}
+        .kpi-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#2563eb;opacity:.8;}
+        .kpi-label{letter-spacing:.025em;text-transform:uppercase;font-size:.7rem;}
+        .kpi-value{font-variant-numeric:tabular-nums;letter-spacing:-.035em;}
+        .card-title{letter-spacing:-.015em;}
+        .table-container{overflow:auto;overscroll-behavior:contain;background:#fff;}
+        table{min-width:760px;}
+        th{letter-spacing:.035em;font-size:.71rem;background:#f8fafc;border-bottom:1px solid var(--border);}
+        tbody tr{transition:background .14s ease;}
+        tbody tr:nth-child(even){background:#fcfdff;}
+        tbody tr:hover{background:#f8fbff;}
+        td{vertical-align:middle;}
+        button,input,select{font:inherit;}
+        button{transition:transform .06s ease,box-shadow .16s ease,filter .16s ease,background .16s ease;}
+        button:not(:disabled):active{transform:translateY(1px);}
+        button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid rgba(37,99,235,.18);outline-offset:2px;}
+        .btn-pay{box-shadow:0 5px 14px rgba(22,163,74,.16);}
+        .btn-pay:hover{filter:brightness(.98);box-shadow:0 7px 18px rgba(22,163,74,.21);}
+        .btn-secondary,.btn-soft,.btn-delete,.btn-warning,.btn-edit,.btn-logout{min-height:34px;}
+        .scan-box input{height:48px;background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.05);}
+        .search-results-dropdown{border-radius:10px;overflow:hidden;}
+        .summary-box{border:1px solid #e5eaf1;background:#f8fafc;}
+        .summary-row.total span:last-child{font-variant-numeric:tabular-nums;}
+        .pay-method-btn{min-height:48px;box-shadow:var(--shadow-sm);}
+        .pay-method-btn:hover{border-color:#cbd5e1;background:#f8fafc;}
+        .pay-method-btn.selected{box-shadow:0 0 0 3px rgba(37,99,235,.08);}
+        .modal{backdrop-filter:blur(3px);background:rgba(15,23,42,.58);}
+        .modal-card,.price-checker-card{border:1px solid rgba(255,255,255,.65);box-shadow:0 24px 70px rgba(15,23,42,.32);}
+        .modal-card{width:min(760px,calc(100vw - 28px));}
+        .receipt{max-width:calc(100vw - 28px);}
+        .empty-state{padding:18px;border:1px dashed #cbd5e1;border-radius:9px;background:#f8fafc;text-align:center;color:var(--muted);}
+        #toast-container{pointer-events:none;}
+        .toast{border:1px solid rgba(255,255,255,.1);box-shadow:0 15px 40px rgba(15,23,42,.24);}
+        .login-card{width:min(390px,calc(100vw - 30px));border:1px solid rgba(255,255,255,.75);box-shadow:0 30px 80px rgba(2,6,23,.45);}
+        #login-screen{background:radial-gradient(circle at 50% 20%,rgba(37,99,235,.18),transparent 35%),linear-gradient(145deg,#020617,#0f172a 55%,#111827);}
+        .login-card h2{font-size:1.45rem;letter-spacing:-.025em;}
+        .login-card p{line-height:1.45;}
+        .access-note{display:none;font-size:.72rem;color:#94a3b8;white-space:nowrap;}
+        @media(max-width:1260px){
+            header{align-items:flex-start}.header-right{margin-left:auto}.logo::after{display:none}.key-badge{display:none}
+        }
+        @media(max-width:1000px){
+            header{padding:10px 12px}.nav-tabs{order:3;width:100%;}.header-right{gap:8px}.user-badge{display:none}.system-strip{padding:0 12px}.system-strip-left{gap:10px}.system-strip-right{gap:10px}
+            main{padding:14px}.dashboard-grid{gap:12px}.dashboard-panels{gap:12px}.pos-grid{gap:12px}.inventory-grid{gap:12px}
+        }
+        @media(max-width:700px){
+            body{overflow:auto;height:auto;min-height:100dvh}header{position:sticky;top:0}.system-strip{position:sticky;top:0;height:auto;min-height:32px;padding:6px 10px;gap:8px}.system-strip-right .system-pill:first-child{display:none}#system-store-name{max-width:170px}
+            main{overflow:visible;padding:10px}.header-right{width:auto;justify-content:flex-end}.header-right .btn-secondary{font-size:0;width:38px;padding:6px}.header-right .btn-secondary::first-letter{font-size:1rem}.btn-logout{font-size:0;width:38px;padding:6px}.btn-logout::first-letter{font-size:1rem}
+            .dashboard-grid{grid-template-columns:1fr 1fr}.kpi-card{padding:14px}.kpi-value{font-size:1.45rem}.dashboard-panels{grid-template-columns:1fr}.card-header-flex{align-items:flex-start;gap:8px;flex-wrap:wrap}.card-header-flex>div:last-child{width:100%;overflow:auto}.scan-box input{font-size:.95rem}
+            .price-checker-card{width:calc(100vw - 22px);padding:20px 14px}.price-tag{font-size:2.25rem}.modal{padding:10px}.modal-card{padding:16px}.grid-2{grid-template-columns:1fr}.metric-strip{grid-template-columns:1fr 1fr!important}
+            #toast-container{left:10px;right:10px;bottom:10px}.toast{min-width:0;max-width:none;width:100%}
+        }
+        @media(max-width:430px){.dashboard-grid{grid-template-columns:1fr}.system-strip-left .system-pill:nth-child(2){display:none}.logo{font-size:.95rem}.tab-btn{padding:8px 10px}.payment-methods{grid-template-columns:1fr 1fr}}
+    </style>
+
 </head>
 <body>
 
@@ -630,14 +712,24 @@
             <button class="tab-btn" style="background-color: var(--warning); color: white;" onclick="openPriceChecker()">🔍 Consultar Precio <span class="key-badge">F11</span></button>
         </div>
         <div class="header-right">
-            <button class="btn-secondary" style="background-color:#0f766e;" onclick="openCashControlModal()">💰 Caja</button>
-            <button class="btn-secondary" style="background-color:#059669;" onclick="openArqueoModal()">📊 Cierre Z</button>
+            <button class="btn-secondary" style="background-color:#0f766e;" onclick="openCashControlModal()" title="Apertura, movimientos y cierre de caja">💰 Caja</button>
+            <button class="btn-secondary" style="background-color:#059669;" onclick="openArqueoModal()" title="Ver resumen diario de ventas">📊 Cierre Z</button>
             <div class="user-badge">
                 👤 <span id="current-user-display">Vendedor</span>
             </div>
             <button class="btn-logout" onclick="logout()">Cerrar Sesión <span class="key-badge">F9</span></button>
         </div>
     </header>
+    <div class="system-strip" id="system-strip">
+        <div class="system-strip-left">
+            <span class="system-pill"><span class="live-dot"></span><span>Terminal operativo</span></span>
+            <span class="system-pill">Sucursal: <strong id="system-store-name">POS Pro</strong></span>
+        </div>
+        <div class="system-strip-right">
+            <span class="system-pill" id="system-role-label">Sesión local</span>
+            <span class="system-pill">🕒 <strong id="system-clock">--:--:--</strong></span>
+        </div>
+    </div>
 
     <main>
         <!-- DASHBOARD V2 -->
@@ -1165,6 +1257,24 @@
         }
         window.alert = (msg) => notify(msg, String(msg).includes('❌') || String(msg).includes('denegado') || String(msg).includes('incorrect') ? 'error' : String(msg).includes('⚠️') ? 'warning' : 'success');
 
+
+
+        function updateSystemUI() {
+            const clock = document.getElementById('system-clock');
+            if (clock) clock.textContent = new Intl.DateTimeFormat('es-CL', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false}).format(new Date());
+            const store = document.getElementById('system-store-name');
+            if (store) store.textContent = (storeConfig && storeConfig.name) ? storeConfig.name : 'POS Pro';
+            const roleLabel = document.getElementById('system-role-label');
+            const userObj = users.find(u => u.name === currentUser);
+            if (roleLabel) roleLabel.textContent = currentUser ? `${userObj && userObj.role === 'admin' ? 'Administrador' : 'Cajero'} · ${currentUser}` : 'Sesión cerrada';
+            const invBtn = document.getElementById('tab-btn-inventario');
+            const cfgBtn = document.getElementById('tab-btn-config');
+            const isAdmin = !!(userObj && userObj.role === 'admin');
+            [invBtn,cfgBtn].forEach(btn => { if(btn){ btn.disabled = !!currentUser && !isAdmin; btn.title = btn.disabled ? 'Disponible solo para Administrador' : ''; }});
+        }
+        setInterval(() => { if (typeof storeConfig !== 'undefined' && typeof users !== 'undefined') updateSystemUI(); }, 1000);
+        window.addEventListener('resize', () => { document.documentElement.style.setProperty('--app-vh', `${window.innerHeight}px`); });
+
         let inactivityTimer;
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
@@ -1346,6 +1456,7 @@
                 document.getElementById('current-user-display').innerText = currentUser;
                 document.getElementById('barcode-input').focus();
             }
+            updateSystemUI();
         }
 
         function renderUserSelect() {
@@ -1995,6 +2106,7 @@
                 address: document.getElementById('cfg-address').value.trim()
             };
             localStorage.setItem('pos_config', JSON.stringify(storeConfig));
+            updateSystemUI();
             alert('Configuración guardada');
         }
 
