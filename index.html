@@ -675,6 +675,11 @@
             .price-checker-card{width:calc(100vw - 22px);padding:20px 14px}.price-tag{font-size:2.25rem}.modal{padding:10px}.modal-card{padding:16px}.grid-2{grid-template-columns:1fr}.metric-strip{grid-template-columns:1fr 1fr!important}
             #toast-container{left:10px;right:10px;bottom:10px}.toast{min-width:0;max-width:none;width:100%}
         }
+        /* Modo juego: la venta queda al centro y la administración pasa a segundo plano. */
+        .game-mode .nav-tabs .tab-btn:not(#tab-btn-caja),.game-mode .header-right > .btn-secondary,.game-mode .header-right .user-badge,.game-mode .btn-logout{display:none}
+        .game-mode .system-strip-left .system-pill:first-child{display:none}
+        .game-catalog{margin-top:16px;border-top:2px dashed #bfdbfe;padding-top:14px}.game-catalog-title{font-size:1.05rem;font-weight:800;color:#1d4ed8;margin-bottom:4px}.game-catalog-help{color:var(--muted);font-size:.84rem;margin-bottom:12px}.game-product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.game-product{min-height:104px;text-align:left;border:2px solid #bfdbfe;background:linear-gradient(180deg,#fff,#eff6ff);border-radius:12px;padding:12px;cursor:pointer}.game-product:hover{border-color:#2563eb;box-shadow:0 6px 18px rgba(37,99,235,.16);transform:translateY(-1px)}.game-product-name{display:block;font-weight:800;color:#1e3a8a;line-height:1.2}.game-product-price{display:block;margin-top:8px;color:#15803d;font-size:1.08rem;font-weight:900}.game-product-stock{display:block;margin-top:3px;color:var(--muted);font-size:.75rem}.game-quick-pay{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}.game-quick-pay button{min-height:44px;border:0;border-radius:9px;background:#dbeafe;color:#1e3a8a;font-weight:800;cursor:pointer}.game-quick-pay button:first-child{background:#dcfce7;color:#166534}.game-mode .card-title{font-size:1.16rem}
+        @media(max-width:700px){.game-product-grid{grid-template-columns:repeat(2,1fr)}.game-product{min-height:94px;padding:10px}}
         @media(max-width:430px){.dashboard-grid{grid-template-columns:1fr}.system-strip-left .system-pill:nth-child(2){display:none}.logo{font-size:.95rem}.tab-btn{padding:8px 10px}.payment-methods{grid-template-columns:1fr 1fr}}
     </style>
 
@@ -684,8 +689,10 @@
     <!-- PANTALLA DE INICIO DE SESIÓN -->
     <div id="login-screen">
         <div class="login-card">
-            <h2>🛒 POS Caja</h2>
-            <p>Selecciona tu usuario e ingresa tu clave</p>
+            <h2>🧸 Mi Tiendita</h2>
+            <p>Elige cómo quieres jugar</p>
+            <button type="button" class="btn-pay" style="padding:12px; margin:0 0 12px; width:100%;" onclick="startGame()">🎮 Jugar a las compras</button>
+            <p style="font-size:.8rem;color:#94a3b8;">¿Eres adulto? Inicia sesión para administrar la tienda.</p>
             <form onsubmit="handleLogin(event)">
                 <div class="form-group">
                     <label>Vendedor / Cajero:</label>
@@ -702,7 +709,7 @@
 
     <!-- ENCABEZADO -->
     <header>
-        <div class="logo">🛒 POS Pro V2 (CLP)</div>
+        <div class="logo">🧸 Mi Tiendita</div>
         <div class="nav-tabs">
             <button class="tab-btn active" id="tab-btn-dashboard" onclick="switchTab('dashboard')">🏠 Resumen</button>
             <button class="tab-btn" id="tab-btn-caja" onclick="switchTab('caja')">💻 Caja <span class="key-badge">F1</span></button>
@@ -769,9 +776,14 @@
 
                     <div class="scan-container">
                         <div class="scan-box">
-                            <input type="text" id="barcode-input" placeholder="🔍 Escribe nombre o escanea código... (Presiona Esc para enfocar)" autofocus oninput="handleSearchInput(this.value)" autocomplete="off">
+                            <input type="text" id="barcode-input" placeholder="🔍 Busca un producto por su nombre..." autofocus oninput="handleSearchInput(this.value)" autocomplete="off">
                         </div>
                         <div id="search-dropdown" class="search-results-dropdown"></div>
+                    </div>
+                    <div class="game-catalog" id="game-catalog-section">
+                        <div class="game-catalog-title">🛍️ Elige productos</div>
+                        <div class="game-catalog-help">Toca un producto para ponerlo en tu carro.</div>
+                        <div id="game-product-grid" class="game-product-grid"></div>
                     </div>
                     <div class="table-container">
                         <table>
@@ -835,6 +847,10 @@
                     <div id="cash-payment-section" style="margin-top: 15px;">
                         <label style="font-size: 0.85rem; font-weight: bold;">Monto Recibido (CLP):</label>
                         <input type="number" id="payment-amount" class="payment-input" placeholder="0" oninput="calculateChange()">
+                        <div class="game-quick-pay">
+                            <button type="button" onclick="useExactAmount()">✨ Pagar justo</button>
+                            <button type="button" onclick="document.getElementById('payment-amount').focus()">⌨️ Escribir efectivo</button>
+                        </div>
                         
                         <div class="summary-box" style="margin-top: 10px;">
                             <div class="summary-row" style="font-size: 1.1rem; font-weight: bold;">
@@ -869,7 +885,16 @@
                         </div>
                         <div class="form-group">
                             <label>Precio Oferta (CLP - Opcional)</label>
-                            <input type="number" id="prod-offer-price" min="0" placeholder="Ej: 1200 (dejar vacío si no hay oferta)">
+                            <input type="number" id="prod-offer-price" min="0" placeholder="Ej: 1200">
+                        </div>
+                        <div class="form-group">
+                            <label>Inicio de oferta</label>
+                            <input type="datetime-local" id="prod-offer-start">
+                        </div>
+                        <div class="form-group">
+                            <label>Término de oferta</label>
+                            <input type="datetime-local" id="prod-offer-end">
+                            <small style="color:var(--muted);">La oferta se aplica automáticamente solo durante este período.</small>
                         </div>
                         <div class="form-group">
                             <label>Stock Disponible</label>
@@ -1311,6 +1336,20 @@
             const offset = date.getTimezoneOffset() * 60000;
             return new Date(date.getTime() - offset).toISOString().slice(0, 10);
         };
+        function isOfferActive(product, date = new Date()) {
+            if (!Number.isFinite(product?.offerPrice) || product.offerPrice <= 0 || !product.offerStartsAt || !product.offerEndsAt) return false;
+            const start = new Date(product.offerStartsAt);
+            const end = new Date(product.offerEndsAt);
+            return !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && start <= date && date <= end;
+        }
+        function getOfferState(product, date = new Date()) {
+            if (!product?.offerPrice || !product.offerStartsAt || !product.offerEndsAt) return 'none';
+            const start = new Date(product.offerStartsAt), end = new Date(product.offerEndsAt);
+            if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'none';
+            if (date < start) return 'scheduled';
+            if (date > end) return 'expired';
+            return 'active';
+        }
 
         let inventory = loadStoredArray('pos_inventory', [
             { barcode: '780123456789', name: 'Coca Cola 1.5L', price: 1800, offerPrice: 1500, stock: 25, minStock: 5 },
@@ -1329,6 +1368,7 @@
         ]);
 
         let currentUser = localStorage.getItem('pos_current_user') || null;
+        let gameMode = localStorage.getItem('pos_game_mode') === 'true';
 
         let cart = [];
         let salesHistory = loadStoredArray('pos_sales', []);
@@ -1383,13 +1423,14 @@
             const dropdown = document.getElementById('search-dropdown');
             const term = val.trim().toLowerCase();
 
+            renderGameCatalog(term);
             if (!term) { dropdown.style.display = 'none'; return; }
 
             const matches = inventory.filter(p => p.name.toLowerCase().includes(term) || p.barcode.toLowerCase().includes(term));
 
             if (matches.length > 0) {
                 dropdown.innerHTML = matches.slice(0, 6).map(p => {
-                    const priceTag = (p.offerPrice && p.offerPrice > 0) 
+                    const priceTag = isOfferActive(p)
                         ? `<span class="strike-price">${formatCLP(p.price)}</span> ${formatCLP(p.offerPrice)} 🔥` 
                         : formatCLP(p.price);
 
@@ -1418,6 +1459,25 @@
 
         function hideSearchDropdown() {
             document.getElementById('search-dropdown').style.display = 'none';
+        }
+
+        function renderGameCatalog(query = '') {
+            const grid = document.getElementById('game-product-grid');
+            if (!grid) return;
+            const term = query.trim().toLowerCase();
+            const products = inventory.filter(p => p.stock > 0 && (!term || p.name.toLowerCase().includes(term) || p.barcode.toLowerCase().includes(term))).slice(0, 12);
+            grid.innerHTML = products.map(p => {
+                const price = isOfferActive(p) ? p.offerPrice : p.price;
+                const encodedBarcode = encodeURIComponent(p.barcode).replace(/'/g, '%27');
+                return `<button type="button" class="game-product" onclick="addToCart(decodeURIComponent('${encodedBarcode}'))"><span class="game-product-name">${escapeHTML(p.name)}</span><span class="game-product-price">${formatCLP(price)}</span><span class="game-product-stock">${p.stock} disponibles</span></button>`;
+            }).join('') || '<div class="empty-state">No encontramos productos. Prueba con otro nombre.</div>';
+        }
+
+        function useExactAmount() {
+            const subtotal = cart.reduce((sum, item) => sum + (item.priceToCharge * item.qty), 0);
+            const discount = selectedMember ? Math.round(subtotal * (selectedMember.discount / 100)) : 0;
+            document.getElementById('payment-amount').value = subtotal - discount;
+            calculateChange();
         }
 
         document.addEventListener('click', function(e) {
@@ -1450,7 +1510,7 @@
                         if (product.stock === 0) stockBadge = `<span class="badge badge-out">Agotado (0 u.)</span>`;
                         else if (product.stock <= (product.minStock || 5)) stockBadge = `<span class="badge badge-low">Bajo Stock (${product.stock} u.)</span>`;
 
-                        const priceHtml = (product.offerPrice && product.offerPrice > 0)
+                        const priceHtml = isOfferActive(product)
                             ? `<span class="strike-price" style="font-size:2rem;">${formatCLP(product.price)}</span> ${formatCLP(product.offerPrice)} <span class="badge badge-promo">OFERTA 🔥</span>`
                             : formatCLP(product.price);
 
@@ -1471,7 +1531,17 @@
         });
 
         function checkLoginState() {
+            if (gameMode) currentUser = 'Jugador/a';
             if (currentUser && !users.some(u => u.name === currentUser)) {
+                if (gameMode) {
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('current-user-display').innerText = currentUser;
+                    document.body.classList.add('game-mode');
+                    switchTab('caja');
+                    renderGameCatalog();
+                    updateSystemUI();
+                    return;
+                }
                 currentUser = null;
                 localStorage.removeItem('pos_current_user');
             }
@@ -1484,6 +1554,15 @@
                 document.getElementById('barcode-input').focus();
             }
             updateSystemUI();
+        }
+
+        function startGame() {
+            gameMode = true;
+            localStorage.setItem('pos_game_mode', 'true');
+            currentUser = 'Jugador/a';
+            document.body.classList.add('game-mode');
+            checkLoginState();
+            notify('¡Tu tienda está lista para jugar!', 'success');
         }
 
         function renderUserSelect() {
@@ -1513,6 +1592,9 @@
 
         function logout(force = false) {
             if (force || confirm('¿Cerrar sesión actual?')) {
+                gameMode = false;
+                localStorage.removeItem('pos_game_mode');
+                document.body.classList.remove('game-mode');
                 currentUser = null;
                 localStorage.removeItem('pos_current_user');
                 switchTab('caja');
@@ -1615,6 +1697,10 @@
         }
 
         function switchTab(tabName) {
+            if (gameMode && tabName !== 'caja') {
+                notify('En modo juego usamos solo la caja. ¡Elige productos y cobra!', 'info');
+                return;
+            }
             const userObj = users.find(u => u.name === currentUser);
             
             if ((tabName === 'config' || tabName === 'inventario') && (!userObj || userObj.role !== 'admin')) {
@@ -1660,6 +1746,8 @@
             const price = parseInt(document.getElementById('prod-price').value);
             const offerPriceVal = document.getElementById('prod-offer-price').value;
             const offerPrice = offerPriceVal ? parseInt(offerPriceVal) : null;
+            const offerStartsAt = document.getElementById('prod-offer-start').value;
+            const offerEndsAt = document.getElementById('prod-offer-end').value;
             const stock = parseInt(document.getElementById('prod-stock').value);
             const minStock = parseInt(document.getElementById('prod-min-stock').value) || 5;
 
@@ -1671,6 +1759,14 @@
                 notify('El precio de oferta debe ser menor al precio normal.', 'error');
                 return;
             }
+            if (offerPrice !== null && (!offerStartsAt || !offerEndsAt || Number.isNaN(new Date(offerStartsAt).getTime()) || Number.isNaN(new Date(offerEndsAt).getTime()) || new Date(offerStartsAt) >= new Date(offerEndsAt))) {
+                notify('Define un inicio y término válidos para la oferta.', 'error');
+                return;
+            }
+            if (offerPrice === null && (offerStartsAt || offerEndsAt)) {
+                notify('Indica un precio de oferta o elimina sus fechas.', 'error');
+                return;
+            }
             if (inventory.some(p => p.barcode === barcode && p.barcode !== editingBarcode)) {
                 playSound('error');
                 alert('¡El código ya existe!');
@@ -1679,9 +1775,9 @@
 
             if (editingBarcode) {
                 const idx = inventory.findIndex(p => p.barcode === editingBarcode);
-                if(idx > -1) { const oldStock = inventory[idx].stock; inventory[idx] = { ...inventory[idx], barcode, name, price, offerPrice, stock, minStock }; if (stock !== oldStock) recordStockMovement(inventory[idx], 'adjustment', stock-oldStock, stock, 'Edición directa de producto'); }
+                if(idx > -1) { const oldStock = inventory[idx].stock; inventory[idx] = { ...inventory[idx], barcode, name, price, offerPrice, offerStartsAt: offerPrice ? offerStartsAt : null, offerEndsAt: offerPrice ? offerEndsAt : null, stock, minStock }; if (stock !== oldStock) recordStockMovement(inventory[idx], 'adjustment', stock-oldStock, stock, 'Edición directa de producto'); }
             } else {
-                inventory.push({ barcode, name, price, offerPrice, stock, minStock }); recordStockMovement({ barcode, name }, 'entry', stock, stock, 'Stock inicial');
+                inventory.push({ barcode, name, price, offerPrice, offerStartsAt: offerPrice ? offerStartsAt : null, offerEndsAt: offerPrice ? offerEndsAt : null, stock, minStock }); recordStockMovement({ barcode, name }, 'entry', stock, stock, 'Stock inicial');
             }
 
             localStorage.setItem('pos_inventory', JSON.stringify(inventory));
@@ -1701,6 +1797,8 @@
             document.getElementById('prod-name').value = prod.name;
             document.getElementById('prod-price').value = prod.price;
             document.getElementById('prod-offer-price').value = prod.offerPrice || '';
+            document.getElementById('prod-offer-start').value = prod.offerStartsAt || '';
+            document.getElementById('prod-offer-end').value = prod.offerEndsAt || '';
             document.getElementById('prod-stock').value = prod.stock;
             document.getElementById('prod-min-stock').value = prod.minStock || 5;
 
@@ -1742,9 +1840,14 @@
                 if (p.stock === 0) badge = '<span class="badge badge-out">Agotado</span>';
                 else if (p.stock <= (p.minStock || 5)) badge = '<span class="badge badge-low">Bajo Stock</span>';
 
-                const offerDisplay = (p.offerPrice && p.offerPrice > 0) 
-                    ? `<strong style="color:var(--success);">${formatCLP(p.offerPrice)}</strong>` 
-                    : '<span style="color:#9ca3af;">Sin oferta</span>';
+                const offerState = getOfferState(p);
+                const offerDisplay = offerState === 'active'
+                    ? `<strong style="color:var(--success);">${formatCLP(p.offerPrice)} · Activa</strong>`
+                    : offerState === 'scheduled'
+                        ? `<span style="color:var(--warning);">Programada</span>`
+                        : offerState === 'expired'
+                            ? '<span style="color:#9ca3af;">Finalizada</span>'
+                            : '<span style="color:#9ca3af;">Sin oferta</span>';
 
                 return `
                     <tr>
@@ -1798,7 +1901,8 @@
                 return;
             }
 
-            const activePrice = (product.offerPrice && product.offerPrice > 0) ? product.offerPrice : product.price;
+            const offerApplied = isOfferActive(product);
+            const activePrice = offerApplied ? product.offerPrice : product.price;
 
             const cartItem = cart.find(item => item.barcode === barcode);
             if (cartItem) {
@@ -1809,7 +1913,7 @@
                 }
                 cartItem.qty += 1;
             } else {
-                cart.push({ ...product, priceToCharge: activePrice, qty: 1 });
+                cart.push({ ...product, priceToCharge: activePrice, offerApplied, qty: 1 });
             }
 
             playSound('success');
@@ -1844,10 +1948,23 @@
             renderCart();
         }
 
+        function syncCartPricing() {
+            cart.forEach(item => {
+                const product = inventory.find(p => p.barcode === item.barcode);
+                if (!product) return;
+                const offerApplied = isOfferActive(product);
+                item.price = product.price;
+                item.offerPrice = product.offerPrice;
+                item.offerApplied = offerApplied;
+                item.priceToCharge = offerApplied ? product.offerPrice : product.price;
+            });
+        }
+
         function renderCart() {
+            syncCartPricing();
             const tbody = document.getElementById('cart-table-body');
             tbody.innerHTML = cart.map(item => {
-                const isOffer = item.offerPrice && item.offerPrice > 0;
+                const isOffer = item.offerApplied === true;
                 const priceTag = isOffer 
                     ? `<span class="strike-price">${formatCLP(item.price)}</span> ${formatCLP(item.priceToCharge)}`
                     : formatCLP(item.priceToCharge);
@@ -1914,6 +2031,8 @@
                 alert('El carrito está vacío.');
                 return;
             }
+
+            syncCartPricing();
 
             const subtotal = cart.reduce((sum, item) => sum + (item.priceToCharge * item.qty), 0);
             const discountAmount = selectedMember ? Math.round(subtotal * (selectedMember.discount / 100)) : 0;
@@ -2222,6 +2341,7 @@
         loadConfigForm();
         populateSalesFilters();
         renderDashboard();
+        renderGameCatalog();
     </script>
 </body>
 </html>
