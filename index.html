@@ -918,19 +918,6 @@
                             <input type="number" id="prod-price" required min="0" placeholder="Ej: 1500">
                         </div>
                         <div class="form-group">
-                            <label>Precio Oferta (CLP - Opcional)</label>
-                            <input type="number" id="prod-offer-price" min="0" placeholder="Ej: 1200">
-                        </div>
-                        <div class="form-group">
-                            <label>Inicio de oferta</label>
-                            <input type="datetime-local" id="prod-offer-start">
-                        </div>
-                        <div class="form-group">
-                            <label>Término de oferta</label>
-                            <input type="datetime-local" id="prod-offer-end">
-                            <small style="color:var(--muted);">La oferta se aplica automáticamente solo durante este período.</small>
-                        </div>
-                        <div class="form-group">
                             <label>Stock Disponible</label>
                             <input type="number" id="prod-stock" required min="0" placeholder="Ej: 50">
                         </div>
@@ -959,7 +946,6 @@
                                     <th>Código</th>
                                     <th>Producto</th>
                                     <th>Precio Normal</th>
-                                    <th>Precio Oferta</th>
                                     <th>Stock</th>
                                     <th>Estado</th>
                                     <th>Acción</th>
@@ -1278,6 +1264,16 @@
             </div>
         </div>
     </div>
+    <div id="instant-offer-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="instant-offer-title">
+        <div class="confirm-dialog" style="text-align:left">
+            <div class="confirm-dialog-icon">🏷️</div>
+            <h3 id="instant-offer-title">Oferta para esta venta</h3>
+            <p id="instant-offer-product"></p>
+            <label for="instant-offer-price" style="display:block;margin-top:16px;font-weight:700">Precio especial (CLP)</label>
+            <input type="number" id="instant-offer-price" min="0" inputmode="numeric" style="width:100%;margin-top:6px;padding:10px;border:1px solid #93c5fd;border-radius:8px;font-weight:700">
+            <div class="confirm-dialog-actions"><button type="button" class="btn-secondary" onclick="closeInstantOffer()">Cancelar</button><button type="button" class="btn-pay" style="margin:0;padding:10px 14px" onclick="saveInstantOffer()">Aplicar oferta</button></div>
+        </div>
+    </div>
 
     <script>
         const formatCLP = (amount) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
@@ -1407,26 +1403,13 @@
             const offset = date.getTimezoneOffset() * 60000;
             return new Date(date.getTime() - offset).toISOString().slice(0, 10);
         };
-        function isOfferActive(product, date = new Date()) {
-            if (!Number.isFinite(product?.offerPrice) || product.offerPrice <= 0 || !product.offerStartsAt || !product.offerEndsAt) return false;
-            const start = new Date(product.offerStartsAt);
-            const end = new Date(product.offerEndsAt);
-            return !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && start <= date && date <= end;
-        }
-        function getOfferState(product, date = new Date()) {
-            if (!product?.offerPrice || !product.offerStartsAt || !product.offerEndsAt) return 'none';
-            const start = new Date(product.offerStartsAt), end = new Date(product.offerEndsAt);
-            if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'none';
-            if (date < start) return 'scheduled';
-            if (date > end) return 'expired';
-            return 'active';
-        }
-
         let inventory = loadStoredArray('pos_inventory', [
-            { barcode: '780123456789', name: 'Coca Cola 1.5L', price: 1800, offerPrice: 1500, stock: 25, minStock: 5 },
-            { barcode: '780987654321', name: 'Pan Hallulla 1Kg', price: 1600, offerPrice: null, stock: 4, minStock: 10 },
-            { barcode: '101', name: 'Café Espresso', price: 2000, offerPrice: 1600, stock: 0, minStock: 5 }
+            { barcode: '780123456789', name: 'Coca Cola 1.5L', price: 1800, stock: 25, minStock: 5 },
+            { barcode: '780987654321', name: 'Pan Hallulla 1Kg', price: 1600, stock: 4, minStock: 10 },
+            { barcode: '101', name: 'Café Espresso', price: 2000, stock: 0, minStock: 5 }
         ]);
+        inventory = inventory.map(({ offerPrice, offerStartsAt, offerEndsAt, ...product }) => product);
+        localStorage.setItem('pos_inventory', JSON.stringify(inventory));
 
         let users = loadStoredArray('pos_users_v2', [
             { name: 'Administrador', pass: '1234', role: 'admin' },
@@ -1502,9 +1485,7 @@
 
             if (matches.length > 0) {
                 dropdown.innerHTML = matches.slice(0, 6).map(p => {
-                    const priceTag = isOfferActive(p)
-                        ? `<span class="strike-price">${formatCLP(p.price)}</span> ${formatCLP(p.offerPrice)} 🔥` 
-                        : formatCLP(p.price);
+                    const priceTag = formatCLP(p.price);
 
                     return `
                         <div class="search-result-item" onclick="selectSearchMatch('${p.barcode}')">
@@ -1539,7 +1520,7 @@
             const term = query.trim().toLowerCase();
             const products = inventory.filter(p => p.stock > 0 && (!term || p.name.toLowerCase().includes(term) || p.barcode.toLowerCase().includes(term))).slice(0, 8);
             grid.innerHTML = products.map(p => {
-                const price = isOfferActive(p) ? p.offerPrice : p.price;
+                const price = p.price;
                 const encodedBarcode = encodeURIComponent(p.barcode).replace(/'/g, '%27');
                 const icon = /libro|cuento|matemática|pirata/i.test(p.name) ? '📚' : /dinosaurio|animal|alce/i.test(p.name) ? '🦕' : /drone/i.test(p.name) ? '🚁' : /dibujo|croquera|acuarela|block/i.test(p.name) ? '🎨' : '🎁';
                 return `<button type="button" class="game-product" onclick="addToCart(decodeURIComponent('${encodedBarcode}'))"><span class="game-product-icon">${icon}</span><span class="game-product-name">${escapeHTML(p.name)}</span><span class="game-product-price">${formatCLP(price)}</span><span class="game-product-stock">${p.stock} disponibles</span></button>`;
@@ -1651,9 +1632,7 @@
                         if (product.stock === 0) stockBadge = `<span class="badge badge-out">Agotado (0 u.)</span>`;
                         else if (product.stock <= (product.minStock || 5)) stockBadge = `<span class="badge badge-low">Bajo Stock (${product.stock} u.)</span>`;
 
-                        const priceHtml = isOfferActive(product)
-                            ? `<span class="strike-price" style="font-size:2rem;">${formatCLP(product.price)}</span> ${formatCLP(product.offerPrice)} <span class="badge badge-promo">OFERTA 🔥</span>`
-                            : formatCLP(product.price);
+                        const priceHtml = formatCLP(product.price);
 
                         displayBox.innerHTML = `
                             <div class="price-product-name">${product.name}</div>
@@ -1905,27 +1884,11 @@
             const barcode = document.getElementById('prod-barcode').value.trim();
             const name = document.getElementById('prod-name').value.trim();
             const price = parseInt(document.getElementById('prod-price').value);
-            const offerPriceVal = document.getElementById('prod-offer-price').value;
-            const offerPrice = offerPriceVal ? parseInt(offerPriceVal) : null;
-            const offerStartsAt = document.getElementById('prod-offer-start').value;
-            const offerEndsAt = document.getElementById('prod-offer-end').value;
             const stock = parseInt(document.getElementById('prod-stock').value);
             const minStock = parseInt(document.getElementById('prod-min-stock').value) || 5;
 
-            if (!barcode || !name || !Number.isInteger(price) || price < 0 || !Number.isInteger(stock) || stock < 0 || !Number.isInteger(minStock) || minStock < 1 || (offerPrice !== null && (!Number.isInteger(offerPrice) || offerPrice < 0))) {
+            if (!barcode || !name || !Number.isInteger(price) || price < 0 || !Number.isInteger(stock) || stock < 0 || !Number.isInteger(minStock) || minStock < 1) {
                 notify('Revisa los datos del producto: usa montos y stock válidos.', 'error');
-                return;
-            }
-            if (offerPrice !== null && offerPrice >= price) {
-                notify('El precio de oferta debe ser menor al precio normal.', 'error');
-                return;
-            }
-            if (offerPrice !== null && (!offerStartsAt || !offerEndsAt || Number.isNaN(new Date(offerStartsAt).getTime()) || Number.isNaN(new Date(offerEndsAt).getTime()) || new Date(offerStartsAt) >= new Date(offerEndsAt))) {
-                notify('Define un inicio y término válidos para la oferta.', 'error');
-                return;
-            }
-            if (offerPrice === null && (offerStartsAt || offerEndsAt)) {
-                notify('Indica un precio de oferta o elimina sus fechas.', 'error');
                 return;
             }
             if (inventory.some(p => p.barcode === barcode && p.barcode !== editingBarcode)) {
@@ -1936,9 +1899,9 @@
 
             if (editingBarcode) {
                 const idx = inventory.findIndex(p => p.barcode === editingBarcode);
-                if(idx > -1) { const oldStock = inventory[idx].stock; inventory[idx] = { ...inventory[idx], barcode, name, price, offerPrice, offerStartsAt: offerPrice ? offerStartsAt : null, offerEndsAt: offerPrice ? offerEndsAt : null, stock, minStock }; if (stock !== oldStock) recordStockMovement(inventory[idx], 'adjustment', stock-oldStock, stock, 'Edición directa de producto'); }
+                if(idx > -1) { const oldStock = inventory[idx].stock; inventory[idx] = { barcode, name, price, stock, minStock }; if (stock !== oldStock) recordStockMovement(inventory[idx], 'adjustment', stock-oldStock, stock, 'Edición directa de producto'); }
             } else {
-                inventory.push({ barcode, name, price, offerPrice, offerStartsAt: offerPrice ? offerStartsAt : null, offerEndsAt: offerPrice ? offerEndsAt : null, stock, minStock }); recordStockMovement({ barcode, name }, 'entry', stock, stock, 'Stock inicial');
+                inventory.push({ barcode, name, price, stock, minStock }); recordStockMovement({ barcode, name }, 'entry', stock, stock, 'Stock inicial');
             }
 
             localStorage.setItem('pos_inventory', JSON.stringify(inventory));
@@ -1957,9 +1920,6 @@
             document.getElementById('prod-barcode').value = prod.barcode;
             document.getElementById('prod-name').value = prod.name;
             document.getElementById('prod-price').value = prod.price;
-            document.getElementById('prod-offer-price').value = prod.offerPrice || '';
-            document.getElementById('prod-offer-start').value = prod.offerStartsAt || '';
-            document.getElementById('prod-offer-end').value = prod.offerEndsAt || '';
             document.getElementById('prod-stock').value = prod.stock;
             document.getElementById('prod-min-stock').value = prod.minStock || 5;
 
@@ -2003,21 +1963,11 @@
                 if (p.stock === 0) badge = '<span class="badge badge-out">Agotado</span>';
                 else if (p.stock <= (p.minStock || 5)) badge = '<span class="badge badge-low">Bajo Stock</span>';
 
-                const offerState = getOfferState(p);
-                const offerDisplay = offerState === 'active'
-                    ? `<strong style="color:var(--success);">${formatCLP(p.offerPrice)} · Activa</strong>`
-                    : offerState === 'scheduled'
-                        ? `<span style="color:var(--warning);">Programada</span>`
-                        : offerState === 'expired'
-                            ? '<span style="color:#9ca3af;">Finalizada</span>'
-                            : '<span style="color:#9ca3af;">Sin oferta</span>';
-
                 return `
                     <tr>
                         <td><code>${p.barcode}</code></td>
                         <td>${p.name}</td>
                         <td>${formatCLP(p.price)}</td>
-                        <td>${offerDisplay}</td>
                         <td>${p.stock} u.</td>
                         <td>${badge}</td>
                         <td>
@@ -2064,9 +2014,6 @@
                 return;
             }
 
-            const offerApplied = isOfferActive(product);
-            const activePrice = offerApplied ? product.offerPrice : product.price;
-
             const cartItem = cart.find(item => item.barcode === barcode);
             if (cartItem) {
                 if (cartItem.qty + 1 > product.stock) {
@@ -2076,7 +2023,7 @@
                 }
                 cartItem.qty += 1;
             } else {
-                cart.push({ ...product, priceToCharge: activePrice, offerApplied, qty: 1 });
+                cart.push({ ...product, priceToCharge: product.price, instantOfferPrice: null, qty: 1 });
             }
 
             playSound('success');
@@ -2111,15 +2058,42 @@
             renderCart();
         }
 
+        let instantOfferBarcode = null;
+        function openInstantOffer(barcode) {
+            const item = cart.find(product => product.barcode === barcode);
+            if (!item || gameMode) return;
+            instantOfferBarcode = barcode;
+            document.getElementById('instant-offer-product').textContent = `${item.name}. Precio normal: ${formatCLP(item.price)}.`;
+            document.getElementById('instant-offer-price').value = Number.isFinite(item.instantOfferPrice) ? item.instantOfferPrice : '';
+            document.getElementById('instant-offer-modal').style.display = 'flex';
+            document.getElementById('instant-offer-price').focus();
+        }
+
+        function closeInstantOffer() {
+            instantOfferBarcode = null;
+            document.getElementById('instant-offer-modal').style.display = 'none';
+        }
+
+        function saveInstantOffer() {
+            const item = cart.find(product => product.barcode === instantOfferBarcode);
+            const specialPrice = parseInt(document.getElementById('instant-offer-price').value);
+            if (!item) { closeInstantOffer(); return; }
+            if (!Number.isInteger(specialPrice) || specialPrice < 0 || specialPrice >= item.price) {
+                notify('El precio de oferta debe ser menor que el precio normal.', 'error');
+                return;
+            }
+            item.instantOfferPrice = specialPrice;
+            closeInstantOffer();
+            renderCart();
+            notify('Oferta aplicada solo a esta venta.', 'success');
+        }
+
         function syncCartPricing() {
             cart.forEach(item => {
                 const product = inventory.find(p => p.barcode === item.barcode);
                 if (!product) return;
-                const offerApplied = isOfferActive(product);
                 item.price = product.price;
-                item.offerPrice = product.offerPrice;
-                item.offerApplied = offerApplied;
-                item.priceToCharge = offerApplied ? product.offerPrice : product.price;
+                item.priceToCharge = Number.isFinite(item.instantOfferPrice) ? item.instantOfferPrice : product.price;
             });
         }
 
@@ -2128,7 +2102,7 @@
             if (gameMode) resetGameChallenge();
             const tbody = document.getElementById('cart-table-body');
             tbody.innerHTML = cart.map(item => {
-                const isOffer = item.offerApplied === true;
+                const isOffer = Number.isFinite(item.instantOfferPrice);
                 const priceTag = isOffer 
                     ? `<span class="strike-price">${formatCLP(item.price)}</span> ${formatCLP(item.priceToCharge)}`
                     : formatCLP(item.priceToCharge);
@@ -2144,7 +2118,7 @@
                             <button class="btn-qty" onclick="updateQty('${item.barcode}', 1)">+</button>
                         </td>
                         <td>${formatCLP(item.priceToCharge * item.qty)}</td>
-                        <td><button class="btn-delete" onclick="removeFromCart('${item.barcode}')">X</button></td>
+                        <td>${gameMode ? '' : `<button class="btn-soft" style="padding:4px 7px;margin-right:4px" onclick="openInstantOffer('${item.barcode}')">🏷️ Oferta</button>`}<button class="btn-delete" onclick="removeFromCart('${item.barcode}')">X</button></td>
                     </tr>
                 `;
             }).join('');
