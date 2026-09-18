@@ -1289,34 +1289,57 @@
         window.onmousemove = resetInactivityTimer;
         window.onkeydown = resetInactivityTimer;
 
-        let inventory = JSON.parse(localStorage.getItem('pos_inventory')) || [
+        // A damaged or manually edited localStorage entry must not prevent the POS from opening.
+        function loadStoredArray(key, fallback) {
+            try {
+                const value = JSON.parse(localStorage.getItem(key));
+                return Array.isArray(value) ? value : fallback;
+            } catch (_) {
+                return fallback;
+            }
+        }
+        function loadStoredObject(key, fallback) {
+            try {
+                const value = JSON.parse(localStorage.getItem(key));
+                return value && typeof value === 'object' && !Array.isArray(value) ? value : fallback;
+            } catch (_) {
+                return fallback;
+            }
+        }
+        const escapeHTML = (value) => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' })[char]);
+        const getLocalISODate = (date = new Date()) => {
+            const offset = date.getTimezoneOffset() * 60000;
+            return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+        };
+
+        let inventory = loadStoredArray('pos_inventory', [
             { barcode: '780123456789', name: 'Coca Cola 1.5L', price: 1800, offerPrice: 1500, stock: 25, minStock: 5 },
             { barcode: '780987654321', name: 'Pan Hallulla 1Kg', price: 1600, offerPrice: null, stock: 4, minStock: 10 },
             { barcode: '101', name: 'Café Espresso', price: 2000, offerPrice: 1600, stock: 0, minStock: 5 }
-        ];
+        ]);
 
-        let users = JSON.parse(localStorage.getItem('pos_users_v2')) || [
+        let users = loadStoredArray('pos_users_v2', [
             { name: 'Administrador', pass: '1234', role: 'admin' },
             { name: 'María González', pass: '1234', role: 'cajero' },
             { name: 'Carlos Rojas', pass: '1234', role: 'cajero' }
-        ];
+        ]);
 
-        let members = JSON.parse(localStorage.getItem('pos_members')) || [
+        let members = loadStoredArray('pos_members', [
             { name: 'Ana Silva', rut: '12.345.678-9', discount: 10 }
-        ];
+        ]);
 
         let currentUser = localStorage.getItem('pos_current_user') || null;
 
         let cart = [];
-        let salesHistory = JSON.parse(localStorage.getItem('pos_sales')) || [];
-        let storeConfig = JSON.parse(localStorage.getItem('pos_config')) || { name: 'MI ALMACÉN / TIENDA', rut: '76.543.210-K', address: 'Av. Providencia 1234, Santiago' };
+        let salesHistory = loadStoredArray('pos_sales', []);
+        let storeConfig = loadStoredObject('pos_config', { name: 'MI ALMACÉN / TIENDA', rut: '76.543.210-K', address: 'Av. Providencia 1234, Santiago' });
         let currentPayMethod = 'Efectivo';
         let editingBarcode = null;
         let selectedMember = null;
-        let stockMovements = JSON.parse(localStorage.getItem('pos_stock_movements')) || [];
-        let cashShift = JSON.parse(localStorage.getItem('pos_cash_shift')) || null;
-        let cashShiftHistory = JSON.parse(localStorage.getItem('pos_cash_shift_history')) || [];
-        let cashMovements = JSON.parse(localStorage.getItem('pos_cash_movements')) || [];
+        let stockMovements = loadStoredArray('pos_stock_movements', []);
+        let cashShift = loadStoredObject('pos_cash_shift', null);
+        let cashShiftHistory = loadStoredArray('pos_cash_shift_history', []);
+        let cashMovements = loadStoredArray('pos_cash_movements', []);
 
         window.addEventListener('keydown', function(e) {
             const isReceiptOpen = document.getElementById('receipt-modal').style.display === 'flex';
@@ -1448,6 +1471,10 @@
         });
 
         function checkLoginState() {
+            if (currentUser && !users.some(u => u.name === currentUser)) {
+                currentUser = null;
+                localStorage.removeItem('pos_current_user');
+            }
             if (!currentUser) {
                 document.getElementById('login-screen').style.display = 'flex';
                 renderUserSelect();
@@ -1515,6 +1542,9 @@
 
         function deleteUser(name) {
             if (users.length <= 1) { alert('Debe haber al menos un usuario.'); return; }
+            if (name === currentUser) { notify('Cierra la sesión antes de eliminar al usuario actual.', 'warning'); return; }
+            const user = users.find(u => u.name === name);
+            if (user?.role === 'admin' && users.filter(u => u.role === 'admin').length <= 1) { notify('Debe mantenerse al menos un administrador.', 'warning'); return; }
             if (confirm(`¿Eliminar al usuario "${name}"?`)) {
                 users = users.filter(u => u.name !== name);
                 localStorage.setItem('pos_users_v2', JSON.stringify(users));
@@ -1527,9 +1557,9 @@
             const tbody = document.getElementById('users-table-body');
             tbody.innerHTML = users.map(u => `
                 <tr>
-                    <td><strong>${u.name}</strong></td>
+                    <td><strong>${escapeHTML(u.name)}</strong></td>
                     <td><span class="badge ${u.role === 'admin' ? 'badge-ok' : 'badge-low'}">${u.role === 'admin' ? 'Administrador' : 'Cajero'}</span></td>
-                    <td><button class="btn-delete" onclick="deleteUser('${u.name}')">Eliminar</button></td>
+                    <td><button class="btn-delete" onclick="deleteUser(${JSON.stringify(u.name).replace(/"/g, '&quot;')})">Eliminar</button></td>
                 </tr>
             `).join('');
         }
@@ -1540,6 +1570,7 @@
             const rut = document.getElementById('new-member-rut').value.trim();
             const discount = parseInt(document.getElementById('new-member-discount').value) || 0;
 
+            if (!Number.isInteger(discount) || discount < 0 || discount > 100) { notify('El descuento debe estar entre 0% y 100%.', 'error'); return; }
             if (name && rut && !members.some(m => m.rut === rut)) {
                 members.push({ name, rut, discount });
                 localStorage.setItem('pos_members', JSON.stringify(members));
@@ -1563,10 +1594,10 @@
             const tbody = document.getElementById('members-table-body');
             tbody.innerHTML = members.map(m => `
                 <tr>
-                    <td><strong>${m.name}</strong></td>
-                    <td><code>${m.rut}</code></td>
+                    <td><strong>${escapeHTML(m.name)}</strong></td>
+                    <td><code>${escapeHTML(m.rut)}</code></td>
                     <td><span class="badge badge-promo">${m.discount}% OFF</span></td>
-                    <td><button class="btn-delete" onclick="deleteMember('${m.rut}')">Eliminar</button></td>
+                    <td><button class="btn-delete" onclick="deleteMember(${JSON.stringify(m.rut).replace(/"/g, '&quot;')})">Eliminar</button></td>
                 </tr>
             `).join('');
         }
@@ -1574,7 +1605,7 @@
         function renderMemberSelect() {
             const select = document.getElementById('cart-member-select');
             select.innerHTML = '<option value="">-- Cliente General (Sin Descuento) --</option>' +
-                members.map(m => `<option value="${m.rut}">${m.name} (${m.rut}) - ${m.discount}% Descuento</option>`).join('');
+                members.map(m => `<option value="${escapeHTML(m.rut)}">${escapeHTML(m.name)} (${escapeHTML(m.rut)}) - ${m.discount}% Descuento</option>`).join('');
         }
 
         function applyMemberDiscount() {
@@ -1632,13 +1663,15 @@
             const stock = parseInt(document.getElementById('prod-stock').value);
             const minStock = parseInt(document.getElementById('prod-min-stock').value) || 5;
 
-            const existingIndex = inventory.findIndex(p => p.barcode === barcode);
-            
-            if (editingBarcode && editingBarcode !== barcode) {
-                inventory = inventory.filter(p => p.barcode !== editingBarcode);
+            if (!barcode || !name || !Number.isInteger(price) || price < 0 || !Number.isInteger(stock) || stock < 0 || !Number.isInteger(minStock) || minStock < 1 || (offerPrice !== null && (!Number.isInteger(offerPrice) || offerPrice < 0))) {
+                notify('Revisa los datos del producto: usa montos y stock válidos.', 'error');
+                return;
             }
-
-            if (existingIndex > -1 && !editingBarcode) {
+            if (offerPrice !== null && offerPrice >= price) {
+                notify('El precio de oferta debe ser menor al precio normal.', 'error');
+                return;
+            }
+            if (inventory.some(p => p.barcode === barcode && p.barcode !== editingBarcode)) {
                 playSound('error');
                 alert('¡El código ya existe!');
                 return;
@@ -1900,6 +1933,17 @@
                 finalPayMethod = document.getElementById('card-type-select').value;
             }
 
+            const unavailable = cart.find(cartItem => {
+                const product = inventory.find(p => p.barcode === cartItem.barcode);
+                return !product || product.stock < cartItem.qty;
+            });
+            if (unavailable) {
+                playSound('error');
+                notify(`Stock insuficiente para ${unavailable.name}. Actualiza el carro.`, 'error');
+                renderCart();
+                return;
+            }
+
             cart.forEach(cartItem => {
                 const prod = inventory.find(p => p.barcode === cartItem.barcode);
                 if (prod) { prod.stock -= cartItem.qty; recordStockMovement(prod, 'sale', -cartItem.qty, prod.stock, 'Venta'); }
@@ -1908,11 +1952,11 @@
             localStorage.setItem('pos_inventory', JSON.stringify(inventory));
 
             const now = new Date();
-            const ticketId = String(salesHistory.length + 101).padStart(6, '0');
+            const ticketId = `V-${Date.now()}`;
             const saleData = {
                 id: ticketId,
                 date: getFormattedDate24H(now),
-                isoDate: now.toISOString().slice(0, 10),
+                isoDate: getLocalISODate(now),
                 isoTimestamp: now.toISOString(),
                 seller: currentUser || 'Vendedor General',
                 member: selectedMember ? `${selectedMember.name} (${selectedMember.discount}% Desc.)` : 'Cliente General',
@@ -2077,7 +2121,7 @@
 
             tbody.innerHTML = filtered.length ? filtered.map(s => {
                 const statusBadge = s.canceled ? '<span class="badge badge-out">ANULADA</span>' : '<span class="badge badge-ok">COMPLETADA</span>';
-                const safe = encodeURIComponent(JSON.stringify(s));
+                const safe = encodeURIComponent(JSON.stringify(s)).replace(/'/g, '%27');
                 const actionBtns = `<button class="btn-secondary" style="padding:2px 8px;" onclick="reprintReceiptEncoded('${safe}')">🖨️ Ticket</button>` + (s.canceled ? '' : ` <button class="btn-delete" style="padding:2px 8px;margin-left:4px;" onclick="cancelSale('${s.id}')">🚫 Anular</button>`);
                 return `<tr class="${s.canceled ? 'canceled-row' : ''}"><td><code>N° ${s.id}</code></td><td>${s.date}</td><td><strong>${s.seller || 'General'}</strong></td><td>${s.member || 'Cliente General'}</td><td>${s.method}</td><td><strong>${formatCLP(s.total)}</strong></td><td>${formatCLP(s.paid)}</td><td>${formatCLP(s.change)}</td><td>${statusBadge}</td><td>${actionBtns}</td></tr>`;
             }).join('') : '<tr><td colspan="10" class="empty-state">No hay transacciones para los filtros seleccionados.</td></tr>';
@@ -2142,7 +2186,7 @@
             recordStockMovement(p,type,delta,p.stock,reason||'Movimiento manual'); localStorage.setItem('pos_inventory',JSON.stringify(inventory)); renderInventory();renderStockMovements();renderDashboard(); notify('Movimiento de stock registrado','success');
         }
 
-        function getTodayISO(){ return new Date().toISOString().slice(0,10); }
+        function getTodayISO(){ return getLocalISODate(); }
         function currentShiftSales(){ if(!cashShift) return []; return salesHistory.filter(s=>!s.canceled && s.method==='Efectivo' && new Date(s.isoTimestamp||s.isoDate).getTime() >= new Date(cashShift.openedISO).getTime()); }
         function getCashExpected(){ if(!cashShift)return 0; const sales=currentShiftSales().reduce((a,s)=>a+s.total,0); const moves=cashMovements.filter(m=>m.shiftId===cashShift.id).reduce((a,m)=>a+(m.type==='in'?m.amount:-m.amount),0); return cashShift.opening+sales+moves; }
         function openCashControlModal(){ renderCashControl(); document.getElementById('cash-control-modal').style.display='flex'; }
