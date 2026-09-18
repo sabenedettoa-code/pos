@@ -676,10 +676,11 @@
             #toast-container{left:10px;right:10px;bottom:10px}.toast{min-width:0;max-width:none;width:100%}
         }
         /* Modo juego: la venta queda al centro y la administración pasa a segundo plano. */
+        .header-store-label{display:block;margin-top:2px;color:#94a3b8;font-size:.67rem;font-weight:700;letter-spacing:.04em;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .game-mode .nav-tabs .tab-btn:not(#tab-btn-caja),.game-mode .header-right > .btn-secondary,.game-mode .header-right .user-badge,.game-mode .btn-logout{display:none}
         .game-mode .system-strip-left .system-pill:first-child{display:none}
-        .game-catalog{margin-top:16px;border-top:2px dashed #bfdbfe;padding-top:14px}.game-catalog-title{font-size:1.05rem;font-weight:800;color:#1d4ed8;margin-bottom:4px}.game-catalog-help{color:var(--muted);font-size:.84rem;margin-bottom:12px}.game-product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.game-product{min-height:104px;text-align:left;border:2px solid #bfdbfe;background:linear-gradient(180deg,#fff,#eff6ff);border-radius:12px;padding:12px;cursor:pointer}.game-product:hover{border-color:#2563eb;box-shadow:0 6px 18px rgba(37,99,235,.16);transform:translateY(-1px)}.game-product-name{display:block;font-weight:800;color:#1e3a8a;line-height:1.2}.game-product-price{display:block;margin-top:8px;color:#15803d;font-size:1.08rem;font-weight:900}.game-product-stock{display:block;margin-top:3px;color:var(--muted);font-size:.75rem}.game-quick-pay{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}.game-quick-pay button{min-height:44px;border:0;border-radius:9px;background:#dbeafe;color:#1e3a8a;font-weight:800;cursor:pointer}.game-quick-pay button:first-child{background:#dcfce7;color:#166534}.game-mode .card-title{font-size:1.16rem}
-        @media(max-width:700px){.game-product-grid{grid-template-columns:repeat(2,1fr)}.game-product{min-height:94px;padding:10px}}
+        .game-mode{background:#fff7ed}.game-mode main{background:linear-gradient(180deg,#fff7ed,#eff6ff)}.game-mode .key-badge,.game-mode #cart-member-select,.game-mode #cart-member-select+*{display:none}.game-mode #method-tarjeta,.game-mode #card-type-section{display:none!important}.game-mode .form-group:has(#cart-member-select){display:none}.game-mode .table-container{margin-top:14px}.game-mode table{min-width:0}.game-mode table th:first-child,.game-mode table td:first-child{display:none}.game-mode .card-title{font-size:1.22rem}.game-catalog{margin-top:16px;border-top:2px dashed #bfdbfe;padding-top:14px}.game-catalog-title{font-size:1.2rem;font-weight:900;color:#1d4ed8;margin-bottom:4px}.game-catalog-help{color:var(--muted);font-size:.9rem;margin-bottom:12px}.game-product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}.game-product{min-height:138px;text-align:center;border:3px solid #bfdbfe;background:linear-gradient(180deg,#fff,#eff6ff);border-radius:16px;padding:12px;cursor:pointer}.game-product:hover{border-color:#2563eb;box-shadow:0 6px 18px rgba(37,99,235,.16);transform:translateY(-2px)}.game-product-icon{display:block;font-size:2rem;margin-bottom:5px}.game-product-name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:800;color:#1e3a8a;line-height:1.2}.game-product-price{display:block;margin-top:8px;color:#15803d;font-size:1.2rem;font-weight:900}.game-product-stock{display:none}.game-quick-pay{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}.game-quick-pay button{min-height:48px;border:0;border-radius:10px;background:#dbeafe;color:#1e3a8a;font-weight:900;cursor:pointer}.game-quick-pay button:first-child{background:#dcfce7;color:#166534}.game-bills{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}.game-bills button{min-height:44px;border:2px solid #fdba74;border-radius:10px;background:#ffedd5;color:#9a3412;font-weight:900;cursor:pointer}
+        @media(max-width:700px){.game-product-grid{grid-template-columns:repeat(2,1fr)}.game-product{min-height:130px;padding:10px}.game-bills{grid-template-columns:repeat(3,1fr)}}
         @media(max-width:430px){.dashboard-grid{grid-template-columns:1fr}.system-strip-left .system-pill:nth-child(2){display:none}.logo{font-size:.95rem}.tab-btn{padding:8px 10px}.payment-methods{grid-template-columns:1fr 1fr}}
     </style>
 
@@ -690,7 +691,7 @@
     <div id="login-screen">
         <div class="login-card">
             <h2>🧸 Mi Tiendita</h2>
-            <p>Elige cómo quieres jugar</p>
+            <p>Elige productos, cobra y descubre cuánto vuelto dar.</p>
             <button type="button" class="btn-pay" style="padding:12px; margin:0 0 12px; width:100%;" onclick="startGame()">🎮 Jugar a las compras</button>
             <p style="font-size:.8rem;color:#94a3b8;">¿Eres adulto? Inicia sesión para administrar la tienda.</p>
             <form onsubmit="handleLogin(event)">
@@ -709,7 +710,7 @@
 
     <!-- ENCABEZADO -->
     <header>
-        <div class="logo">🧸 Mi Tiendita</div>
+        <div class="logo"><span id="app-brand">🛒 POS Pro V2 (CLP)</span><span id="header-store-label" class="header-store-label"></span></div>
         <div class="nav-tabs">
             <button class="tab-btn active" id="tab-btn-dashboard" onclick="switchTab('dashboard')">🏠 Resumen</button>
             <button class="tab-btn" id="tab-btn-caja" onclick="switchTab('caja')">💻 Caja <span class="key-badge">F1</span></button>
@@ -850,6 +851,11 @@
                         <div class="game-quick-pay">
                             <button type="button" onclick="useExactAmount()">✨ Pagar justo</button>
                             <button type="button" onclick="document.getElementById('payment-amount').focus()">⌨️ Escribir efectivo</button>
+                        </div>
+                        <div class="game-bills" aria-label="Billetes para jugar">
+                            <button type="button" onclick="setGamePayment(1000)">$1.000</button>
+                            <button type="button" onclick="setGamePayment(5000)">$5.000</button>
+                            <button type="button" onclick="setGamePayment(10000)">$10.000</button>
                         </div>
                         
                         <div class="summary-box" style="margin-top: 10px;">
@@ -1289,6 +1295,8 @@
             if (clock) clock.textContent = new Intl.DateTimeFormat('es-CL', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false}).format(new Date());
             const store = document.getElementById('system-store-name');
             if (store) store.textContent = (storeConfig && storeConfig.name) ? storeConfig.name : 'POS Pro';
+            const headerStore = document.getElementById('header-store-label');
+            if (headerStore) headerStore.textContent = (storeConfig && storeConfig.name) ? `Tienda: ${storeConfig.name}` : '';
             const roleLabel = document.getElementById('system-role-label');
             const userObj = users.find(u => u.name === currentUser);
             if (roleLabel) roleLabel.textContent = currentUser ? `${userObj && userObj.role === 'admin' ? 'Administrador' : 'Cajero'} · ${currentUser}` : 'Sesión cerrada';
@@ -1296,6 +1304,14 @@
             const cfgBtn = document.getElementById('tab-btn-config');
             const isAdmin = !!(userObj && userObj.role === 'admin');
             [invBtn,cfgBtn].forEach(btn => { if(btn){ btn.disabled = !!currentUser && !isAdmin; btn.title = btn.disabled ? 'Disponible solo para Administrador' : ''; }});
+        }
+
+        function updateGameAppearance() {
+            document.body.classList.toggle('game-mode', gameMode);
+            const brand = document.getElementById('app-brand');
+            const headerStore = document.getElementById('header-store-label');
+            if (brand) brand.textContent = gameMode ? '🧸 Mi Tiendita' : '🛒 POS Pro V2 (CLP)';
+            if (headerStore && gameMode) headerStore.textContent = '¡A jugar a las compras!';
         }
         setInterval(() => { if (typeof storeConfig !== 'undefined' && typeof users !== 'undefined') updateSystemUI(); }, 1000);
         window.addEventListener('resize', () => { document.documentElement.style.setProperty('--app-vh', `${window.innerHeight}px`); });
@@ -1465,11 +1481,12 @@
             const grid = document.getElementById('game-product-grid');
             if (!grid) return;
             const term = query.trim().toLowerCase();
-            const products = inventory.filter(p => p.stock > 0 && (!term || p.name.toLowerCase().includes(term) || p.barcode.toLowerCase().includes(term))).slice(0, 12);
+            const products = inventory.filter(p => p.stock > 0 && (!term || p.name.toLowerCase().includes(term) || p.barcode.toLowerCase().includes(term))).slice(0, 8);
             grid.innerHTML = products.map(p => {
                 const price = isOfferActive(p) ? p.offerPrice : p.price;
                 const encodedBarcode = encodeURIComponent(p.barcode).replace(/'/g, '%27');
-                return `<button type="button" class="game-product" onclick="addToCart(decodeURIComponent('${encodedBarcode}'))"><span class="game-product-name">${escapeHTML(p.name)}</span><span class="game-product-price">${formatCLP(price)}</span><span class="game-product-stock">${p.stock} disponibles</span></button>`;
+                const icon = /libro|cuento|matemática|pirata/i.test(p.name) ? '📚' : /dinosaurio|animal|alce/i.test(p.name) ? '🦕' : /drone/i.test(p.name) ? '🚁' : /dibujo|croquera|acuarela|block/i.test(p.name) ? '🎨' : '🎁';
+                return `<button type="button" class="game-product" onclick="addToCart(decodeURIComponent('${encodedBarcode}'))"><span class="game-product-icon">${icon}</span><span class="game-product-name">${escapeHTML(p.name)}</span><span class="game-product-price">${formatCLP(price)}</span><span class="game-product-stock">${p.stock} disponibles</span></button>`;
             }).join('') || '<div class="empty-state">No encontramos productos. Prueba con otro nombre.</div>';
         }
 
@@ -1477,6 +1494,11 @@
             const subtotal = cart.reduce((sum, item) => sum + (item.priceToCharge * item.qty), 0);
             const discount = selectedMember ? Math.round(subtotal * (selectedMember.discount / 100)) : 0;
             document.getElementById('payment-amount').value = subtotal - discount;
+            calculateChange();
+        }
+
+        function setGamePayment(amount) {
+            document.getElementById('payment-amount').value = amount;
             calculateChange();
         }
 
@@ -1536,7 +1558,7 @@
                 if (gameMode) {
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('current-user-display').innerText = currentUser;
-                    document.body.classList.add('game-mode');
+                    updateGameAppearance();
                     switchTab('caja');
                     renderGameCatalog();
                     updateSystemUI();
@@ -1560,7 +1582,9 @@
             gameMode = true;
             localStorage.setItem('pos_game_mode', 'true');
             currentUser = 'Jugador/a';
-            document.body.classList.add('game-mode');
+            selectedMember = null;
+            document.getElementById('cart-member-select').value = '';
+            updateGameAppearance();
             checkLoginState();
             notify('¡Tu tienda está lista para jugar!', 'success');
         }
@@ -1594,7 +1618,7 @@
             if (force || confirm('¿Cerrar sesión actual?')) {
                 gameMode = false;
                 localStorage.removeItem('pos_game_mode');
-                document.body.classList.remove('game-mode');
+                updateGameAppearance();
                 currentUser = null;
                 localStorage.removeItem('pos_current_user');
                 switchTab('caja');
@@ -2052,26 +2076,26 @@
                 finalPayMethod = document.getElementById('card-type-select').value;
             }
 
-            const unavailable = cart.find(cartItem => {
-                const product = inventory.find(p => p.barcode === cartItem.barcode);
-                return !product || product.stock < cartItem.qty;
-            });
-            if (unavailable) {
-                playSound('error');
-                notify(`Stock insuficiente para ${unavailable.name}. Actualiza el carro.`, 'error');
-                renderCart();
-                return;
+            if (!gameMode) {
+                const unavailable = cart.find(cartItem => {
+                    const product = inventory.find(p => p.barcode === cartItem.barcode);
+                    return !product || product.stock < cartItem.qty;
+                });
+                if (unavailable) {
+                    playSound('error');
+                    notify(`Stock insuficiente para ${unavailable.name}. Actualiza el carro.`, 'error');
+                    renderCart();
+                    return;
+                }
+                cart.forEach(cartItem => {
+                    const prod = inventory.find(p => p.barcode === cartItem.barcode);
+                    if (prod) { prod.stock -= cartItem.qty; recordStockMovement(prod, 'sale', -cartItem.qty, prod.stock, 'Venta'); }
+                });
+                localStorage.setItem('pos_inventory', JSON.stringify(inventory));
             }
 
-            cart.forEach(cartItem => {
-                const prod = inventory.find(p => p.barcode === cartItem.barcode);
-                if (prod) { prod.stock -= cartItem.qty; recordStockMovement(prod, 'sale', -cartItem.qty, prod.stock, 'Venta'); }
-            });
-
-            localStorage.setItem('pos_inventory', JSON.stringify(inventory));
-
             const now = new Date();
-            const ticketId = `V-${Date.now()}`;
+            const ticketId = gameMode ? `JUEGO-${Date.now()}` : `V-${Date.now()}`;
             const saleData = {
                 id: ticketId,
                 date: getFormattedDate24H(now),
@@ -2088,14 +2112,14 @@
                 canceled: false
             };
 
-            salesHistory.push(saleData);
-            localStorage.setItem('pos_sales', JSON.stringify(salesHistory));
+            if (!gameMode) {
+                salesHistory.push(saleData);
+                localStorage.setItem('pos_sales', JSON.stringify(salesHistory));
+            }
 
             playSound('success');
             showReceipt(saleData);
-            renderInventory();
-            renderSales();
-            renderDashboard();
+            if (!gameMode) { renderInventory(); renderSales(); renderDashboard(); }
         }
 
         function cancelSale(ticketId) {
