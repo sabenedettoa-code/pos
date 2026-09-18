@@ -430,6 +430,8 @@
             overflow-y: auto;
             padding: 20px 0;
         }
+        .confirm-dialog{width:min(420px,calc(100vw - 30px));padding:24px;text-align:center;border-radius:16px;background:#fff;box-shadow:0 24px 70px rgba(15,23,42,.32)}
+        .confirm-dialog-icon{width:48px;height:48px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;background:#fff7ed;color:#c2410c;font-size:1.45rem}.confirm-dialog h3{margin:0 0 8px;color:#172554;font-size:1.25rem}.confirm-dialog p{margin:0;color:#475569;line-height:1.45}.confirm-dialog-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}.confirm-dialog-actions button{min-width:118px}.confirm-dialog .btn-delete{border:0;padding:10px 14px;border-radius:8px;font-weight:700;cursor:pointer}
 
         /* Vista previa de boleta para papel térmico de 58 mm. */
         .receipt {
@@ -1253,6 +1255,17 @@
         <div class="card-title" style="margin-top:18px;">Últimos cierres</div><div id="cash-history" class="mini-list" style="margin-top:8px;"></div>
     </div></div>
     <div id="toast-container"></div>
+    <div id="confirm-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+        <div class="confirm-dialog">
+            <div class="confirm-dialog-icon" id="confirm-icon">⚠️</div>
+            <h3 id="confirm-title">Confirmar acción</h3>
+            <p id="confirm-message"></p>
+            <div class="confirm-dialog-actions">
+                <button type="button" class="btn-secondary" id="confirm-cancel">Cancelar</button>
+                <button type="button" class="btn-delete" id="confirm-accept">Confirmar</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const formatCLP = (amount) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
@@ -1300,10 +1313,23 @@
             c.appendChild(t);
             setTimeout(() => t.remove(), 3200);
         }
-        window.alert = (msg) => notify(msg, String(msg).includes('❌') || String(msg).includes('denegado') || String(msg).includes('incorrect') ? 'error' : String(msg).includes('⚠️') ? 'warning' : 'success');
-
-
-
+        function confirmAction(message, onConfirm, options = {}) {
+            const modal = document.getElementById('confirm-modal');
+            const title = document.getElementById('confirm-title');
+            const text = document.getElementById('confirm-message');
+            const icon = document.getElementById('confirm-icon');
+            const accept = document.getElementById('confirm-accept');
+            const cancel = document.getElementById('confirm-cancel');
+            title.textContent = options.title || 'Confirmar acción';
+            text.textContent = message;
+            icon.textContent = options.icon || '⚠️';
+            accept.textContent = options.acceptText || 'Confirmar';
+            modal.style.display = 'flex';
+            const close = () => { modal.style.display = 'none'; accept.onclick = null; cancel.onclick = null; };
+            cancel.onclick = close;
+            accept.onclick = () => { close(); onConfirm(); };
+            accept.focus();
+        }
         function updateSystemUI() {
             const clock = document.getElementById('system-clock');
             if (clock) clock.textContent = new Intl.DateTimeFormat('es-CL', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false}).format(new Date());
@@ -1338,7 +1364,7 @@
             clearTimeout(inactivityTimer);
             if (currentUser) {
                 inactivityTimer = setTimeout(() => {
-                    alert('🔒 Sesión cerrada automáticamente por inactividad.');
+                    notify('Sesión cerrada automáticamente por inactividad.', 'warning');
                     logout(true);
                 }, 300000);
             }
@@ -1625,14 +1651,14 @@
                 checkLoginState();
             } else {
                 playSound('error');
-                alert('❌ Contraseña incorrecta.');
+                notify('Contraseña incorrecta.', 'error');
                 document.getElementById('user-password').value = '';
                 document.getElementById('user-password').focus();
             }
         }
 
         function logout(force = false) {
-            if (force || confirm('¿Cerrar sesión actual?')) {
+            const endSession = () => {
                 gameMode = false;
                 localStorage.removeItem('pos_game_mode');
                 updateGameAppearance();
@@ -1640,7 +1666,9 @@
                 localStorage.removeItem('pos_current_user');
                 switchTab('caja');
                 checkLoginState();
-            }
+            };
+            if (force) endSession();
+            else confirmAction('¿Quieres cerrar la sesión actual?', endSession, { title: 'Cerrar sesión', icon: '🔒', acceptText: 'Cerrar sesión' });
         }
 
         function exitGame() {
@@ -1671,21 +1699,22 @@
                 renderUserSelect();
                 nameInput.value = '';
                 passInput.value = '';
-                alert('✅ Usuario registrado.');
+                notify('Usuario registrado.', 'success');
             }
         }
 
         function deleteUser(name) {
-            if (users.length <= 1) { alert('Debe haber al menos un usuario.'); return; }
+            if (users.length <= 1) { notify('Debe haber al menos un usuario.', 'warning'); return; }
             if (name === currentUser) { notify('Cierra la sesión antes de eliminar al usuario actual.', 'warning'); return; }
             const user = users.find(u => u.name === name);
             if (user?.role === 'admin' && users.filter(u => u.role === 'admin').length <= 1) { notify('Debe mantenerse al menos un administrador.', 'warning'); return; }
-            if (confirm(`¿Eliminar al usuario "${name}"?`)) {
+            confirmAction(`¿Eliminar al usuario "${name}"?`, () => {
                 users = users.filter(u => u.name !== name);
                 localStorage.setItem('pos_users_v2', JSON.stringify(users));
                 renderUsersTable();
                 renderUserSelect();
-            }
+                notify('Usuario eliminado.', 'success');
+            }, { title: 'Eliminar usuario', acceptText: 'Eliminar' });
         }
 
         function renderUsersTable() {
@@ -1712,17 +1741,18 @@
                 renderMembersTable();
                 renderMemberSelect();
                 document.getElementById('member-form').reset();
-                alert('✅ Socio/a registrado/a.');
+                notify('Socio/a registrado/a.', 'success');
             }
         }
 
         function deleteMember(rut) {
-            if (confirm('¿Eliminar socio/a?')) {
+            confirmAction('¿Eliminar este socio o socia?', () => {
                 members = members.filter(m => m.rut !== rut);
                 localStorage.setItem('pos_members', JSON.stringify(members));
                 renderMembersTable();
                 renderMemberSelect();
-            }
+                notify('Socio/a eliminado/a.', 'success');
+            }, { title: 'Eliminar socio/a', acceptText: 'Eliminar' });
         }
 
         function renderMembersTable() {
@@ -1758,7 +1788,7 @@
             
             if ((tabName === 'config' || tabName === 'inventario') && (!userObj || userObj.role !== 'admin')) {
                 playSound('error');
-                alert('🔒 Acceso denegado: Solo el Administrador puede ingresar.');
+                notify('Acceso denegado: solo el Administrador puede ingresar.', 'error');
                 return;
             }
 
@@ -1822,7 +1852,7 @@
             }
             if (inventory.some(p => p.barcode === barcode && p.barcode !== editingBarcode)) {
                 playSound('error');
-                alert('¡El código ya existe!');
+                notify('El código ya existe.', 'error');
                 return;
             }
 
@@ -1837,7 +1867,7 @@
             renderInventory();
             cancelEdit();
             playSound('success');
-            alert('Producto guardado');
+            notify('Producto guardado.', 'success');
         }
 
         function editProduct(barcode) {
@@ -1866,20 +1896,22 @@
         }
 
         function deleteProduct(barcode) {
-            if (confirm('¿Eliminar producto?')) {
+            confirmAction('¿Eliminar este producto del inventario?', () => {
                 inventory = inventory.filter(p => p.barcode !== barcode);
                 localStorage.setItem('pos_inventory', JSON.stringify(inventory));
                 renderInventory();
-            }
+                notify('Producto eliminado.', 'success');
+            }, { title: 'Eliminar producto', acceptText: 'Eliminar' });
         }
 
         function resetAllStock() {
-            if (confirm('⚠️ ¿Reiniciar stock de TODOS los productos a 0?')) {
+            confirmAction('Se pondrá el stock de todos los productos en 0. Esta acción no se puede deshacer.', () => {
                 inventory.forEach(p => { const delta = -p.stock; p.stock = 0; if (delta !== 0) recordStockMovement(p, 'reset', delta, 0, 'Reinicio general de stock'); });
                 localStorage.setItem('pos_inventory', JSON.stringify(inventory));
                 renderInventory();
                 renderDashboard();
-            }
+                notify('Stock reiniciado a 0.', 'success');
+            }, { title: 'Reiniciar todo el stock', icon: '⚠️', acceptText: 'Reiniciar stock' });
         }
 
         function renderInventory() {
@@ -1937,7 +1969,7 @@
                             hideSearchDropdown();
                         } else {
                             playSound('error');
-                            alert('Producto no encontrado');
+                            notify('Producto no encontrado.', 'error');
                         }
                     }
                 }
@@ -1950,7 +1982,7 @@
 
             if (product.stock <= 0) {
                 playSound('error');
-                alert('¡Sin stock disponible!');
+                notify('Sin stock disponible.', 'error');
                 return;
             }
 
@@ -1961,7 +1993,7 @@
             if (cartItem) {
                 if (cartItem.qty + 1 > product.stock) {
                     playSound('error');
-                    alert('Supera el stock disponible');
+                    notify('Supera el stock disponible.', 'error');
                     return;
                 }
                 cartItem.qty += 1;
@@ -1980,7 +2012,7 @@
             if (item) {
                 if (delta > 0 && item.qty + delta > product.stock) {
                     playSound('error');
-                    alert('Supera el stock disponible');
+                    notify('Supera el stock disponible.', 'error');
                     return;
                 }
                 item.qty += delta;
@@ -2081,7 +2113,7 @@
         function processPayment() {
             if (cart.length === 0) {
                 playSound('error');
-                alert('El carrito está vacío.');
+                notify('El carrito está vacío.', 'error');
                 return;
             }
 
@@ -2098,7 +2130,7 @@
                 payment = parseInt(document.getElementById('payment-amount').value) || 0;
                 if (payment < total) {
                     playSound('error');
-                    alert('El dinero ingresado es menor al total.');
+                    notify('El dinero ingresado es menor al total.', 'error');
                     return;
                 }
             } else if (currentPayMethod === 'Tarjeta') {
@@ -2155,11 +2187,11 @@
             const userObj = users.find(u => u.name === currentUser);
             if (!userObj || userObj.role !== 'admin') {
                 playSound('error');
-                alert('🔒 Solo el Administrador puede anular boletas.');
+                notify('Solo el Administrador puede anular boletas.', 'error');
                 return;
             }
 
-            if (confirm(`¿Anular la boleta N° ${ticketId}? Se devolverán los productos al stock.`)) {
+            confirmAction(`¿Anular la boleta N° ${ticketId}? Los productos volverán al stock.`, () => {
                 const sale = salesHistory.find(s => s.id === ticketId);
                 if (sale && !sale.canceled) {
                     sale.canceled = true;
@@ -2175,9 +2207,9 @@
                     renderInventory();
                     renderSales();
                     renderDashboard();
-                    alert('✅ Boleta anulada con éxito y stock devuelto.');
+                    notify('Boleta anulada y stock devuelto.', 'success');
                 }
-            }
+            }, { title: 'Anular boleta', icon: '⚠️', acceptText: 'Anular boleta' });
         }
 
         function openArqueoModal() {
@@ -2304,7 +2336,7 @@
 
         function exportSalesToExcel() {
             const filtered = getFilteredSales();
-            if(filtered.length === 0) { alert('No hay ventas para exportar.'); return; }
+            if(filtered.length === 0) { notify('No hay ventas para exportar.', 'warning'); return; }
             const dataToExport = filtered.map(s => ({
                 'N° Boleta': s.id, 'Fecha y Hora': s.date, 'Vendedor': s.seller || 'General', 'Socio/a': s.member || 'Cliente General',
                 'Ahorro Socio CLP': s.savings || 0, 'Método de Pago': s.method, 'Total CLP': s.total, 'Pagó con':s.paid, 'Vuelto':s.change,
@@ -2323,7 +2355,7 @@
             };
             localStorage.setItem('pos_config', JSON.stringify(storeConfig));
             updateSystemUI();
-            alert('Configuración guardada');
+            notify('Configuración guardada.', 'success');
         }
 
         function loadConfigForm() {
