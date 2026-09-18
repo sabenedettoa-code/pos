@@ -2179,6 +2179,12 @@
 
             const changeEl = document.getElementById('cart-change');
             if (currentPayMethod === 'Efectivo') {
+                if (gameMode) {
+                    changeEl.innerText = payment >= total && total > 0 ? 'Calcula el vuelto' : 'Elige un billete';
+                    changeEl.style.color = 'var(--primary-dark)';
+                    updateGameLearning();
+                    return;
+                }
                 if (change >= 0) {
                     changeEl.innerText = formatCLP(change);
                     changeEl.style.color = 'var(--success)';
