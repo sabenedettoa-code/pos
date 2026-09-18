@@ -431,17 +431,19 @@
             padding: 20px 0;
         }
 
-        /* BOLETA ANCHO Y MARGEN PROPORCIONAL Y SIMÉTRICO */
+        /* Vista previa de boleta para papel térmico de 58 mm. */
         .receipt {
             background: #ffffff;
-            width: 350px;
-            padding: 18px 20px;
-            border-radius: 6px;
+            box-sizing: border-box;
+            width: 58mm;
+            max-width: calc(100vw - 28px);
+            padding: 3mm 5mm;
+            border-radius: 2px;
             font-family: 'Courier New', Courier, monospace;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             color: #000000 !important;
-            font-size: 0.83rem;
-            line-height: 1.3;
+            font-size: 10px;
+            line-height: 1.25;
             margin: auto;
         }
 
@@ -544,10 +546,14 @@
                 position: absolute;
                 left: 0;
                 top: 0;
+                box-sizing: border-box !important;
                 width: 58mm !important;
-                padding: 2mm !important;
+                max-width: 58mm !important;
+                padding: 3mm 5mm !important;
                 box-shadow: none !important;
                 border-radius: 0 !important;
+                font-size: 10px !important;
+                line-height: 1.25 !important;
             }
             .no-print { display: none !important; }
         }
@@ -677,7 +683,7 @@
         }
         /* Encabezado en dos filas para conservar todas las acciones visibles. */
         header{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"brand actions" "tabs tabs";align-items:center;gap:8px 14px;padding:10px 18px}
-        .logo{grid-area:brand;min-width:0}.nav-tabs{grid-area:tabs;display:flex;width:100%;min-width:0;max-width:none;overflow-x:auto;padding:2px 0;scrollbar-width:thin}.header-right{grid-area:actions;min-width:0;max-width:100%;margin-left:auto;overflow-x:auto;scrollbar-width:thin}
+        .logo{grid-area:brand;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;font-size:1rem}.logo::after{display:none}#app-brand{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1.45rem;font-weight:800;letter-spacing:-.025em}.nav-tabs{grid-area:tabs;display:flex;width:100%;min-width:0;max-width:none;overflow-x:auto;padding:2px 0;scrollbar-width:thin}.header-right{grid-area:actions;min-width:0;max-width:100%;margin-left:auto;overflow-x:auto;scrollbar-width:thin}
         /* Modo juego: la venta queda al centro y la administración pasa a segundo plano. */
         .header-store-label{display:block;margin-top:2px;color:#94a3b8;font-size:.67rem;font-weight:700;letter-spacing:.04em;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .game-exit-btn{display:none;border:0;border-radius:9px;padding:9px 12px;background:#f97316;color:white;font-weight:800;cursor:pointer}.game-mode .game-exit-btn{display:inline-flex;align-items:center;gap:6px}
@@ -1303,8 +1309,11 @@
             if (clock) clock.textContent = new Intl.DateTimeFormat('es-CL', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false}).format(new Date());
             const store = document.getElementById('system-store-name');
             if (store) store.textContent = (storeConfig && storeConfig.name) ? storeConfig.name : 'POS Pro';
+            const storeName = (storeConfig && storeConfig.name) ? storeConfig.name : 'MI TIENDA';
+            const brand = document.getElementById('app-brand');
+            if (brand && !gameMode) brand.textContent = storeName;
             const headerStore = document.getElementById('header-store-label');
-            if (headerStore) headerStore.textContent = (storeConfig && storeConfig.name) ? `Tienda: ${storeConfig.name}` : '';
+            if (headerStore && !gameMode) headerStore.textContent = 'Punto de venta';
             const roleLabel = document.getElementById('system-role-label');
             const userObj = users.find(u => u.name === currentUser);
             if (roleLabel) roleLabel.textContent = currentUser ? `${userObj && userObj.role === 'admin' ? 'Administrador' : 'Cajero'} · ${currentUser}` : 'Sesión cerrada';
@@ -1318,8 +1327,8 @@
             document.body.classList.toggle('game-mode', gameMode);
             const brand = document.getElementById('app-brand');
             const headerStore = document.getElementById('header-store-label');
-            if (brand) brand.textContent = gameMode ? '🧸 Mi Tiendita' : '🛒 POS Pro V2 (CLP)';
-            if (headerStore && gameMode) headerStore.textContent = '¡A jugar a las compras!';
+            if (brand) brand.textContent = gameMode ? '🧸 Mi Tiendita' : ((storeConfig && storeConfig.name) ? storeConfig.name : 'MI TIENDA');
+            if (headerStore) headerStore.textContent = gameMode ? '¡A jugar a las compras!' : 'Punto de venta';
         }
         setInterval(() => { if (typeof storeConfig !== 'undefined' && typeof users !== 'undefined') updateSystemUI(); }, 1000);
         window.addEventListener('resize', () => { document.documentElement.style.setProperty('--app-vh', `${window.innerHeight}px`); });
