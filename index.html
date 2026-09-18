@@ -694,6 +694,7 @@
         .game-mode{background:#fff7ed}.game-mode main{background:linear-gradient(180deg,#fff7ed,#eff6ff)}.game-mode .key-badge,.game-mode #cart-member-select,.game-mode #cart-member-select+*{display:none}.game-mode #method-tarjeta,.game-mode #card-type-section{display:none!important}.game-mode .form-group:has(#cart-member-select){display:none}.game-mode .table-container{margin-top:14px}.game-mode table{min-width:0}.game-mode table th:first-child,.game-mode table td:first-child{display:none}.game-mode .card-title{font-size:1.22rem}
         /* Estos controles didácticos solo se muestran dentro del juego. */
         .game-catalog,.game-quick-pay,.game-bills{display:none}
+        .game-learning-panel,.game-change-challenge{display:none}.game-mode .game-learning-panel{display:block;margin:14px 0 16px;padding:15px;border:2px solid #a7f3d0;border-radius:16px;background:linear-gradient(135deg,#ecfdf5,#eff6ff);color:#134e4a}.game-learning-top{display:flex;justify-content:space-between;gap:10px;align-items:center}.game-learning-panel h3{margin:0;font-size:1.08rem;color:#0f766e}.game-stars{padding:6px 10px;border-radius:999px;background:#fef3c7;color:#92400e;font-weight:900;white-space:nowrap}.game-mission{margin:9px 0 8px;font-weight:700}.game-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;list-style:none;padding:0;margin:0}.game-steps li{padding:7px 6px;border-radius:9px;background:#fff;color:#64748b;font-size:.76rem;font-weight:700;text-align:center}.game-steps li.done{background:#dcfce7;color:#166534}.game-mode .game-change-challenge{display:block;margin:12px 0;padding:12px;border:2px dashed #93c5fd;border-radius:13px;background:#f8fbff}.game-change-challenge strong{display:block;color:#1d4ed8;margin-bottom:5px}.game-change-challenge p{margin:0 0 9px;color:#475569;font-size:.86rem}.game-answer-row{display:flex;gap:8px}.game-answer-row input{min-width:0;flex:1;padding:9px;border:1px solid #93c5fd;border-radius:8px;font-weight:700}.game-answer-row button{border:0;border-radius:8px;padding:9px 12px;background:#2563eb;color:#fff;font-weight:800;cursor:pointer}.game-answer-feedback{min-height:20px;margin-top:7px;font-weight:700;font-size:.85rem}.game-answer-feedback.success{color:#15803d}.game-answer-feedback.error{color:#b45309}
         .game-mode .game-catalog{display:block;margin-top:16px;border-top:2px dashed #bfdbfe;padding-top:14px}.game-mode .game-catalog-title{font-size:1.2rem;font-weight:900;color:#1d4ed8;margin-bottom:4px}.game-mode .game-catalog-help{color:var(--muted);font-size:.9rem;margin-bottom:12px}.game-mode .game-product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}.game-mode .game-product{min-height:138px;text-align:center;border:3px solid #bfdbfe;background:linear-gradient(180deg,#fff,#eff6ff);border-radius:16px;padding:12px;cursor:pointer}.game-mode .game-product:hover{border-color:#2563eb;box-shadow:0 6px 18px rgba(37,99,235,.16);transform:translateY(-2px)}.game-mode .game-product-icon{display:block;font-size:2rem;margin-bottom:5px}.game-mode .game-product-name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:800;color:#1e3a8a;line-height:1.2}.game-mode .game-product-price{display:block;margin-top:8px;color:#15803d;font-size:1.2rem;font-weight:900}.game-mode .game-product-stock{display:none}.game-mode .game-quick-pay{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}.game-mode .game-quick-pay button{min-height:48px;border:0;border-radius:10px;background:#dbeafe;color:#1e3a8a;font-weight:900;cursor:pointer}.game-mode .game-quick-pay button:first-child{background:#dcfce7;color:#166534}.game-mode .game-bills{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}.game-mode .game-bills button{min-height:44px;border:2px solid #fdba74;border-radius:10px;background:#ffedd5;color:#9a3412;font-weight:900;cursor:pointer}
         @media(max-width:700px){header{grid-template-columns:minmax(0,1fr);grid-template-areas:"brand" "actions" "tabs";padding:10px 12px}.header-right{width:100%;margin-left:0;justify-content:flex-start}.nav-tabs{order:initial}.game-mode .game-product-grid{grid-template-columns:repeat(2,1fr)}.game-mode .game-product{min-height:130px;padding:10px}.game-mode .game-bills{grid-template-columns:repeat(3,1fr)}}
         @media(max-width:430px){.dashboard-grid{grid-template-columns:1fr}.system-strip-left .system-pill:nth-child(2){display:none}.logo{font-size:.95rem}.tab-btn{padding:8px 10px}.payment-methods{grid-template-columns:1fr 1fr}}
@@ -797,6 +798,11 @@
                         </div>
                         <div id="search-dropdown" class="search-results-dropdown"></div>
                     </div>
+                    <section class="game-learning-panel" aria-live="polite">
+                        <div class="game-learning-top"><h3>🎯 Misión de compra</h3><span class="game-stars" id="game-stars">⭐ 0 estrellas</span></div>
+                        <p class="game-mission" id="game-mission">Elige 2 productos para comenzar.</p>
+                        <ol class="game-steps"><li id="game-step-products">1. Elige</li><li id="game-step-pay">2. Paga</li><li id="game-step-change">3. Calcula vuelto</li></ol>
+                    </section>
                     <div class="game-catalog" id="game-catalog-section">
                         <div class="game-catalog-title">🛍️ Elige productos</div>
                         <div class="game-catalog-help">Toca un producto para ponerlo en tu carro.</div>
@@ -872,6 +878,12 @@
                             <button type="button" onclick="setGamePayment(1000)">$1.000</button>
                             <button type="button" onclick="setGamePayment(5000)">$5.000</button>
                             <button type="button" onclick="setGamePayment(10000)">$10.000</button>
+                        </div>
+                        <div class="game-change-challenge">
+                            <strong>🧠 Desafío de vuelto</strong>
+                            <p id="game-change-question">Elige productos y un billete. Luego calcula el vuelto.</p>
+                            <div class="game-answer-row"><input type="number" id="game-change-answer" min="0" placeholder="Tu respuesta" inputmode="numeric"><button type="button" onclick="checkGameChange()">Revisar</button></div>
+                            <div id="game-change-feedback" class="game-answer-feedback" aria-live="polite"></div>
                         </div>
                         
                         <div class="summary-box" style="margin-top: 10px;">
@@ -1428,6 +1440,7 @@
 
         let currentUser = localStorage.getItem('pos_current_user') || null;
         let gameMode = localStorage.getItem('pos_game_mode') === 'true';
+        let gameLearning = { stars: 0, rewardedKey: '', changeSolved: false };
 
         let cart = [];
         let salesHistory = loadStoredArray('pos_sales', []);
@@ -1533,15 +1546,78 @@
             }).join('') || '<div class="empty-state">No encontramos productos. Prueba con otro nombre.</div>';
         }
 
+        function getGameTotal() {
+            const subtotal = cart.reduce((sum, item) => sum + (item.priceToCharge * item.qty), 0);
+            const discount = selectedMember ? Math.round(subtotal * (selectedMember.discount / 100)) : 0;
+            return subtotal - discount;
+        }
+
+        function updateGameLearning() {
+            if (!gameMode) return;
+            const count = cart.reduce((sum, item) => sum + item.qty, 0);
+            const total = getGameTotal();
+            const payment = parseInt(document.getElementById('payment-amount').value) || 0;
+            const stars = document.getElementById('game-stars');
+            const mission = document.getElementById('game-mission');
+            const stepProducts = document.getElementById('game-step-products');
+            const stepPay = document.getElementById('game-step-pay');
+            const stepChange = document.getElementById('game-step-change');
+            const question = document.getElementById('game-change-question');
+            if (!stars || !mission) return;
+            stars.textContent = `⭐ ${gameLearning.stars} estrella${gameLearning.stars === 1 ? '' : 's'}`;
+            stepProducts.classList.toggle('done', count > 0);
+            stepPay.classList.toggle('done', payment >= total && total > 0);
+            stepChange.classList.toggle('done', gameLearning.changeSolved);
+            if (!count) mission.textContent = 'Elige 2 productos para comenzar.';
+            else if (count < 2) mission.textContent = `¡Bien! Llevas ${count}. Elige uno más para practicar una suma.`;
+            else if (payment < total) mission.textContent = `Tu compra cuesta ${formatCLP(total)}. Elige un billete para pagar.`;
+            else if (!gameLearning.changeSolved) mission.textContent = 'Ahora resta el total al dinero recibido para descubrir el vuelto.';
+            else mission.textContent = '¡Excelente cálculo! Puedes finalizar la compra y ganar una estrella extra.';
+            question.textContent = payment >= total && total > 0
+                ? `Si pagas con ${formatCLP(payment)} y la compra cuesta ${formatCLP(total)}, ¿cuánto vuelto debes dar?`
+                : 'Elige productos y un billete. Luego calcula el vuelto.';
+        }
+
+        function resetGameChallenge() {
+            gameLearning.changeSolved = false;
+            const answer = document.getElementById('game-change-answer');
+            const feedback = document.getElementById('game-change-feedback');
+            if (answer) answer.value = '';
+            if (feedback) { feedback.textContent = ''; feedback.className = 'game-answer-feedback'; }
+        }
+
+        function checkGameChange() {
+            const total = getGameTotal();
+            const payment = parseInt(document.getElementById('payment-amount').value) || 0;
+            const answer = parseInt(document.getElementById('game-change-answer').value);
+            const feedback = document.getElementById('game-change-feedback');
+            if (!total || payment < total) { feedback.textContent = 'Primero elige productos y un billete que alcance para pagar.'; feedback.className = 'game-answer-feedback error'; return; }
+            const expected = payment - total;
+            if (answer === expected) {
+                if (!gameLearning.changeSolved) gameLearning.stars += 2;
+                gameLearning.changeSolved = true;
+                feedback.textContent = `¡Correcto! ${formatCLP(payment)} − ${formatCLP(total)} = ${formatCLP(expected)}. Ganaste 2 estrellas.`;
+                feedback.className = 'game-answer-feedback success';
+                playSound('success');
+            } else {
+                feedback.textContent = 'Aún no. Resta el precio de la compra al billete que recibió la tienda.';
+                feedback.className = 'game-answer-feedback error';
+                playSound('error');
+            }
+            updateGameLearning();
+        }
+
         function useExactAmount() {
             const subtotal = cart.reduce((sum, item) => sum + (item.priceToCharge * item.qty), 0);
             const discount = selectedMember ? Math.round(subtotal * (selectedMember.discount / 100)) : 0;
             document.getElementById('payment-amount').value = subtotal - discount;
+            resetGameChallenge();
             calculateChange();
         }
 
         function setGamePayment(amount) {
             document.getElementById('payment-amount').value = amount;
+            resetGameChallenge();
             calculateChange();
         }
 
@@ -1626,9 +1702,11 @@
             localStorage.setItem('pos_game_mode', 'true');
             currentUser = 'Jugador/a';
             selectedMember = null;
+            gameLearning = { stars: 0, rewardedKey: '', changeSolved: false };
             document.getElementById('cart-member-select').value = '';
             updateGameAppearance();
             checkLoginState();
+            updateGameLearning();
             notify('¡Tu tienda está lista para jugar!', 'success');
         }
 
@@ -2047,6 +2125,7 @@
 
         function renderCart() {
             syncCartPricing();
+            if (gameMode) resetGameChallenge();
             const tbody = document.getElementById('cart-table-body');
             tbody.innerHTML = cart.map(item => {
                 const isOffer = item.offerApplied === true;
@@ -2108,6 +2187,7 @@
                     changeEl.style.color = 'var(--danger)';
                 }
             }
+            updateGameLearning();
         }
 
         function processPayment() {
@@ -2179,6 +2259,10 @@
             }
 
             playSound('success');
+            if (gameMode) {
+                gameLearning.stars += 1;
+                notify(`¡Venta terminada! Ganaste una estrella extra. Ahora tienes ${gameLearning.stars} estrellas.`, 'success');
+            }
             showReceipt(saleData);
             if (!gameMode) { renderInventory(); renderSales(); renderDashboard(); }
         }
